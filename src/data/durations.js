@@ -4,23 +4,15 @@
  * Deliberately non-linear: fine-grained at the short end, coarser as sessions
  * get longer. Defined in one place so presets can change without touching UI.
  */
+import { isDevDurationEnabled } from '../services/featureFlags.js'
+
 export const DURATION_PRESETS_MINUTES = [1, 2, 3, 5, 8, 10, 15, 20]
 
 export const DEFAULT_DURATION_MINUTES = 5
 
 /**
- * True under `vite dev` and in tests, false in a production build.
- *
- * Vite replaces `import.meta.env.DEV` with a literal at build time, so this is
- * a compile-time constant: every guard below it collapses to `false` in a
- * production bundle. The dev duration is therefore unreachable in production —
- * not merely hidden by CSS or by a runtime flag someone could flip.
- */
-export const IS_DEV = import.meta.env.DEV
-
-/**
- * A development-only duration that runs exactly one breath: one inhale, one
- * exhale, then the session completes.
+ * A development duration that runs exactly one breath: one inhale, one exhale,
+ * then the session completes. Offered only behind the `?devduration=1` flag.
  *
  * It works by leaning on the completion rule rather than special-casing it: a
  * session always runs to the first cycle boundary at or after its configured
@@ -34,13 +26,21 @@ export const IS_DEV = import.meta.env.DEV
  */
 export const DEV_DURATION_MINUTES = 1 / 60
 
-/** Never true in a production build, so a dev duration cannot leak into one. */
+/** Whether `minutes` *is* the dev duration — a question about the number only. */
 export function isDevDuration(minutes) {
-  return IS_DEV && minutes === DEV_DURATION_MINUTES
+  return minutes === DEV_DURATION_MINUTES
 }
 
+/**
+ * Whether `minutes` may be selected right now.
+ *
+ * The dev duration counts only while its flag is on, so a value persisted
+ * during a flagged visit falls back to the default on an ordinary one rather
+ * than silently handing someone a one-breath session.
+ */
 export function isValidDuration(minutes) {
-  return DURATION_PRESETS_MINUTES.includes(minutes) || isDevDuration(minutes)
+  if (DURATION_PRESETS_MINUTES.includes(minutes)) return true
+  return isDevDuration(minutes) && isDevDurationEnabled()
 }
 
 export function durationOrDefault(minutes) {

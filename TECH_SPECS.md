@@ -346,11 +346,19 @@ duration (product specification §3) is defined as one second and needs no
 special case in the controller — it is an ordinary session that happens to be
 shorter than every cycle.
 
-It is gated on `import.meta.env.DEV`, which Vite replaces with a literal at
-build time, so the guard is a compile-time constant and the duration is
-unreachable in a production build. It is also rejected by `isValidDuration`
-there, so a value persisted while developing cannot survive into production:
-`durationOrDefault` falls back to the 5-minute default.
+It is offered only behind the `devduration` feature flag (§15.1). Two separate
+questions are kept apart:
+
+- **Is this number the dev duration?** A pure predicate on the value, used by
+  the completion screen to label it rather than render "0.0166… minutes".
+- **May it be selected?** Flag-dependent. `isValidDuration` rejects it when the
+  flag is off, so a duration persisted during a flagged visit is discarded on an
+  ordinary one — `durationOrDefault` falls back to the 5-minute default rather
+  than silently starting a one-breath session.
+
+The selector button and the completion label are deliberately untranslated: the
+message catalogues hold copy that ships to users, and nobody reaches either
+without putting the flag in the URL themselves.
 
 ## 5.3 Timer Display
 
@@ -734,6 +742,42 @@ make dev
 ```
 
 The development server should bind appropriately for local development and, where useful, allow access from another device on the local network for testing the mobile UI.
+
+## 15.1 Feature Flags
+
+Development affordances are exposed as **runtime feature flags read from the URL
+query string**, not as `import.meta.env.DEV` branches:
+
+```text
+http://localhost:5173/?devduration=1
+```
+
+A flag is off unless the URL asks for it. `?flag`, `?flag=1`, `=true`, `=yes`
+and `=on` enable it; anything else, `=0` included, leaves it off.
+
+Runtime rather than build-time is the point. One bundle behaves both ways, so a
+flagged affordance can be exercised against the real production build — over
+the Docker image, or a deployed S3 copy — instead of only under `vite dev`,
+where the code being tested is not the code being shipped.
+
+The trade is that a flag is reachable by anyone who edits the URL. Only
+affordances that are harmless in a stranger's hands belong behind one. Anything
+that must be genuinely unavailable in production needs a build-time guard
+instead, not a flag.
+
+Flags are read from `location.search` on each check rather than cached at import.
+A cache would have to be primed before any other module's top-level code ran —
+`useSession.js` sanitises the stored duration as it loads — and priming it would
+need a test-only seam.
+
+`make dev` turns the dev-duration flag on by default (§14); every other target
+serves the flag-free application.
+
+### Defined flags
+
+| Flag | Effect |
+|---|---|
+| `devduration` | Offers the one-breath duration (§5.2, product specification §3). |
 
 ---
 

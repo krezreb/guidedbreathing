@@ -13,8 +13,8 @@ defineEmits(['done'])
  * The dev duration is a fraction of a minute, which `duration.long` would
  * render as "0.0166… minutes" — on the very screen that duration exists to
  * test. Label it for what it is instead. Untranslated, like the button that
- * selects it: `isDevDuration` is false in a production build, so a user never
- * sees this branch.
+ * selects it: the only way to reach this branch is to have asked for the
+ * duration by URL flag.
  */
 const durationLabel = computed(() =>
   isDevDuration(props.durationMinutes)

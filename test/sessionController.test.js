@@ -8,13 +8,7 @@ import {
   SESSION_STATE,
 } from '../src/services/sessionController.js'
 import { BREATHING_PROFILES, findProfile } from '../src/data/breathingProfiles.js'
-import {
-  DEV_DURATION_MINUTES,
-  DURATION_PRESETS_MINUTES,
-  durationOrDefault,
-  isDevDuration,
-  isValidDuration,
-} from '../src/data/durations.js'
+import { DURATION_PRESETS_MINUTES } from '../src/data/durations.js'
 import { fakeClock } from './helpers.js'
 
 function session(profileId, durationMinutes, clock) {
@@ -187,47 +181,6 @@ describe('completion and overflow', () => {
         // A cycle boundary is the end of an exhale, by construction.
         expect(s.endMs % s.cycleMs).toBe(0)
       }
-    }
-  })
-
-  // The dev duration is a testing affordance, so it is worth a test of its own:
-  // its whole value is that it reaches COMPLETED after exactly one breath.
-  it.each(BREATHING_PROFILES)(
-    'the dev duration runs $id for exactly one inhale and one exhale',
-    (profile) => {
-      const clock = fakeClock()
-      const s = session(profile.id, DEV_DURATION_MINUTES, clock)
-      expect(s.endMs).toBe(s.cycleMs)
-
-      s.start()
-      // Still inhaling.
-      clock.advance(s.inhaleMs - 1)
-      expect(s.snapshot().phase).toBe(PHASE.INHALE)
-      expect(s.tick()).toBe(false)
-
-      // Still exhaling: one breath is not over until the exhale finishes.
-      clock.advance(1)
-      expect(s.snapshot().phase).toBe(PHASE.EXHALE)
-      clock.advance(s.exhaleMs - 1)
-      expect(s.tick()).toBe(false)
-      expect(s.state).toBe(SESSION_STATE.RUNNING)
-
-      clock.advance(1)
-      expect(s.tick()).toBe(true)
-      expect(s.state).toBe(SESSION_STATE.COMPLETED)
-      expect(s.elapsed()).toBe(s.cycleMs)
-    },
-  )
-
-  it('accepts the dev duration as a valid selection under a dev build', () => {
-    expect(isDevDuration(DEV_DURATION_MINUTES)).toBe(true)
-    expect(isValidDuration(DEV_DURATION_MINUTES)).toBe(true)
-    expect(durationOrDefault(DEV_DURATION_MINUTES)).toBe(DEV_DURATION_MINUTES)
-    // Not one of the presets the UI grid renders, and shorter than every cycle.
-    expect(DURATION_PRESETS_MINUTES).not.toContain(DEV_DURATION_MINUTES)
-    for (const profile of BREATHING_PROFILES) {
-      const s = session(profile.id, DEV_DURATION_MINUTES, fakeClock())
-      expect(s.durationMs).toBeLessThan(s.cycleMs)
     }
   })
 

@@ -58,12 +58,22 @@ The set is deliberately non-linear: fine-grained at the short end, coarser as
 sessions get longer. It must be defined in one place (see the technical
 specification) so that presets can be added or changed without touching UI code.
 
-These eight are the whole of the product. Development builds additionally offer
-a **one-breath duration** — a single inhale followed by a single exhale, after
-which the session completes normally. It exists only so the end-of-session
-behaviour (completion animation, sound and message) can be exercised in seconds
-rather than a full minute. It must never be reachable in a production build, and
-it is not translated.
+These eight are the whole of the product. Behind a feature flag the application
+also offers a **one-breath duration** — a single inhale followed by a single
+exhale, after which the session completes normally. It exists so that the
+end-of-session behaviour (completion animation, sound and message) can be
+exercised in seconds rather than a full minute.
+
+The flag is off unless the URL asks for it:
+
+```text
+?devduration=1
+```
+
+It is therefore not part of what the application offers a user, and is not
+translated. A one-breath duration selected while the flag was on is discarded on
+a later visit without it, rather than being restored from the remembered
+preferences.
 
 The selected duration determines the total length of the breathing session.
 

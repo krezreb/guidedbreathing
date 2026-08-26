@@ -1,5 +1,6 @@
 <script setup>
-import { DEV_DURATION_MINUTES, DURATION_PRESETS_MINUTES, IS_DEV } from '../data/durations.js'
+import { DEV_DURATION_MINUTES, DURATION_PRESETS_MINUTES } from '../data/durations.js'
+import { isDevDurationEnabled } from '../services/featureFlags.js'
 import { t, tp } from '../services/i18n.js'
 
 const props = defineProps({
@@ -26,14 +27,13 @@ const emit = defineEmits(['update:modelValue'])
       </button>
     </div>
 
-    <!-- Development builds only: one inhale, one exhale, then the session
-         completes — enough to exercise the end-of-session animation, sound and
-         message without sitting through a real session. Deliberately not
-         translated: the catalogues hold user-visible copy, and `IS_DEV` is a
-         compile-time false in a production build, so this never renders for a
-         user (see data/durations.js). -->
+    <!-- Behind the `?devduration=1` flag: one inhale, one exhale, then the
+         session completes — enough to exercise the end-of-session animation,
+         sound and message without sitting through a real session. Deliberately
+         not translated; the catalogues hold copy that ships to users, and
+         nobody reaches this without putting the flag in the URL themselves. -->
     <button
-      v-if="IS_DEV"
+      v-if="isDevDurationEnabled()"
       type="button"
       class="duration duration--dev"
       :class="{ 'duration--selected': DEV_DURATION_MINUTES === props.modelValue }"
