@@ -11,12 +11,18 @@
  * Vue re-renders are unnecessary.
  */
 import { computed, ref, shallowRef } from 'vue'
-import { createSession, formatRemaining, PAUSE_REASON, SESSION_STATE } from './sessionController.js'
+import {
+  createSession,
+  formatRemaining,
+  PAUSE_REASON,
+  PHASE,
+  SESSION_STATE,
+} from './sessionController.js'
 import { profileOrDefault, DEFAULT_PROFILE_ID } from '../data/breathingProfiles.js'
 import { durationOrDefault, DEFAULT_DURATION_MINUTES } from '../data/durations.js'
 import { loadPreferences, updatePreferences } from './storage.js'
 import * as wakeLock from './screenWakeLock.js'
-import * as sound from './completionSound.js'
+import * as sound from './sounds.js'
 
 const HISTORY_MARKER = 'guided-breathing-session'
 
@@ -53,13 +59,42 @@ let frameHandle = null
 
 function syncReactive() {
   const active = controller.value
-  if (!active) return
+  if (!active) return null
   const snapshot = active.snapshot()
   if (sessionState.value !== snapshot.state) sessionState.value = snapshot.state
   if (pauseReason.value !== snapshot.pauseReason) pauseReason.value = snapshot.pauseReason
   if (phase.value !== snapshot.phase) phase.value = snapshot.phase
   const label = formatRemaining(snapshot.remainingMs)
   if (remainingLabel.value !== label) remainingLabel.value = label
+  return snapshot
+}
+
+/* -- Phase cue sounds (SPECS §16.1) --------------------------------------- */
+
+/**
+ * The phase whose cue has already been dealt with. Seeded at Begin so the first
+ * inhale — which no exhale preceded — is silent, and cleared at teardown.
+ */
+let cuedPhase = null
+
+/**
+ * Sound the end of a breathing phase.
+ *
+ * A cue marks a transition, so it is driven by the phase *change* rather than by
+ * a time: it plays on the first frame of the new phase, which is the moment the
+ * previous one ended. The cue names the breath now due — the inhale cue at the
+ * end of an exhale, the exhale cue at the end of an inhale — so it tells the
+ * user what to do rather than what they have just finished.
+ *
+ * Called only from the animation loop, and only on a frame that did not complete
+ * the session: a paused session runs no frames, so it makes no sound, and the
+ * final exhale is marked by the completion chime alone rather than by two sounds
+ * at once (FR-26).
+ */
+function cuePhaseChange(currentPhase) {
+  if (currentPhase === cuedPhase) return
+  cuedPhase = currentPhase
+  sound.play(currentPhase === PHASE.INHALE ? sound.SOUND.INHALE : sound.SOUND.EXHALE)
 }
 
 function stopLoop() {
@@ -79,8 +114,9 @@ function startLoop() {
       onCompleted()
       return
     }
-    syncReactive()
-    if (active.state === SESSION_STATE.RUNNING) {
+    const snapshot = syncReactive()
+    if (snapshot && active.state === SESSION_STATE.RUNNING) {
+      cuePhaseChange(snapshot.phase)
       frameHandle = requestAnimationFrame(step)
     }
   }
@@ -92,7 +128,7 @@ function onCompleted() {
   syncReactive()
   wakeLock.release()
   releaseHistoryEntry()
-  sound.play()
+  sound.play(sound.SOUND.COMPLETION)
 }
 
 /* -- Android hardware back button (TECH_SPECS §6.2) ----------------------- */
@@ -145,6 +181,8 @@ export function begin() {
   })
   controller.value = session
   session.start()
+  // The session opens on an inhale that no exhale preceded: nothing to cue yet.
+  cuedPhase = PHASE.INHALE
   syncReactive()
   claimHistoryEntry()
   wakeLock.acquire()
@@ -213,6 +251,7 @@ export function returnHome() {
 
 function teardown() {
   resumeAfterExitCancel = false
+  cuedPhase = null
   stopLoop()
   wakeLock.release()
   releaseHistoryEntry()

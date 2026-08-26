@@ -613,7 +613,36 @@ The sound should:
   user is away, so the sound only ever plays to a user who is looking at or
   listening to an unlocked device.
 
-The application should not require continuous audio during the breathing session unless this is added as a future feature.
+## 16.1 Breathing Phase Cues
+
+A short sound must also mark the end of each breathing phase:
+
+- At the end of an inhale — cueing the breath out.
+- At the end of an exhale — cueing the breath in.
+
+The two cues must be distinguishable from each other, and from the completion
+sound, so that hearing one is enough to know what to do next without looking at
+the screen.
+
+The cues should:
+
+- Be shorter and quieter than the completion sound. They recur every few
+  seconds, so they must sit in the background of the session rather than
+  punctuate it.
+- Be gentle and non-intrusive, in keeping with the completion sound.
+- Not play at the start of a session: the opening inhale ends no phase, and the
+  user has just tapped Begin.
+- Not play for the final exhale of a session. That boundary is the end of the
+  session, and is marked by the completion sound alone rather than by two
+  sounds at once.
+- Not play while the session is paused, while the application is hidden, or
+  after the user exits.
+- Never be required. The animation remains the primary guide, so a session with
+  no audible cues — muted device, blocked audio — is unaffected.
+
+The application should not require *continuous* audio during the breathing
+session: the cues are discrete, short sounds at the phase boundaries. Continuous
+audio guidance remains a possible future feature (§20).
 
 ---
 
@@ -753,6 +782,9 @@ The user must be able to choose the interface language from the main screen. The
 
 ### FR-25 — Translated Interface
 All user-visible text, including accessible labels, must come from message catalogues rather than being embedded in application logic, component markup or data modules.
+
+### FR-26 — Phase Cue Sounds
+The application must play a short, distinct sound at the end of each inhale and each exhale of a running session, and must not play one at the start of a session, for the final exhale, or while the session is paused, hidden or exited.
 
 ---
 
