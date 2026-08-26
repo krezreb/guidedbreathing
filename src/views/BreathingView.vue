@@ -26,7 +26,9 @@ const phaseLabel = computed(() => (phase.value === PHASE.EXHALE ? 'Breathe out' 
     <SessionTimer :label="remainingLabel" />
 
     <div class="session__guide">
-      <BreathingCanvas v-if="controller" :controller="controller" />
+      <div class="session__stage">
+        <BreathingCanvas v-if="controller" :controller="controller" />
+      </div>
 
       <div class="session__phase" :class="{ 'session__phase--paused': isPaused }">
         <p class="session__phase-text" aria-live="polite">
@@ -60,6 +62,17 @@ const phaseLabel = computed(() => (phase.value === PHASE.EXHALE ? 'Breathe out' 
   position: relative;
   flex: 1;
   min-height: 12rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* The breathing bubble travels vertically, so the stage stays a narrow centred
+   column: a third of the available width at most. The phase text overlays the
+   full guide width so long labels stay readable beside it. */
+.session__stage {
+  position: relative;
+  width: 100%;
+  max-width: 33.3333%;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
