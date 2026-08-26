@@ -136,6 +136,10 @@ onBeforeUnmount(() => {
 .canvas-host {
   position: absolute;
   inset: 0;
+  /* The guide's corners are rounded but no longer clip their children, so the
+     bubble's halo is clipped here instead. */
+  border-radius: inherit;
+  overflow: hidden;
 }
 
 .canvas-host :deep(canvas) {
