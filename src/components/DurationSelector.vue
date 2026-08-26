@@ -1,20 +1,18 @@
 <script setup>
-import { DURATION_PRESETS_MINUTES } from '../data/durations.js'
+import { DEV_DURATION_MINUTES, DURATION_PRESETS_MINUTES } from '../data/durations.js'
+import { isDevDurationEnabled } from '../services/featureFlags.js'
+import { t, tp } from '../services/i18n.js'
 
 const props = defineProps({
   modelValue: { type: Number, required: true },
 })
 const emit = defineEmits(['update:modelValue'])
-
-function label(minutes) {
-  return minutes === 1 ? '1 min' : `${minutes} min`
-}
 </script>
 
 <template>
   <fieldset class="selector">
-    <legend class="selector__legend">Duration</legend>
-    <div class="selector__grid" role="group" aria-label="Session duration">
+    <legend class="selector__legend">{{ t('duration.legend') }}</legend>
+    <div class="selector__grid" role="group" :aria-label="t('duration.legend')">
       <button
         v-for="minutes in DURATION_PRESETS_MINUTES"
         :key="minutes"
@@ -22,12 +20,29 @@ function label(minutes) {
         class="duration"
         :class="{ 'duration--selected': minutes === props.modelValue }"
         :aria-pressed="minutes === props.modelValue"
-        :aria-label="`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`"
+        :aria-label="tp('duration.long', minutes, { minutes })"
         @click="emit('update:modelValue', minutes)"
       >
-        {{ label(minutes) }}
+        {{ t('duration.short', { minutes }) }}
       </button>
     </div>
+
+    <!-- Behind the `?devduration=1` flag: one inhale, one exhale, then the
+         session completes — enough to exercise the end-of-session animation,
+         sound and message without sitting through a real session. Deliberately
+         not translated; the catalogues hold copy that ships to users, and
+         nobody reaches this without putting the flag in the URL themselves. -->
+    <button
+      v-if="isDevDurationEnabled()"
+      type="button"
+      class="duration duration--dev"
+      :class="{ 'duration--selected': DEV_DURATION_MINUTES === props.modelValue }"
+      :aria-pressed="DEV_DURATION_MINUTES === props.modelValue"
+      aria-label="Developer duration: a single breath in and out"
+      @click="emit('update:modelValue', DEV_DURATION_MINUTES)"
+    >
+      Dev &middot; 1 breath
+    </button>
   </fieldset>
 </template>
 
@@ -66,6 +81,17 @@ function label(minutes) {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   transition: background 200ms var(--ease-calm), border-color 200ms var(--ease-calm);
+}
+
+/* Visibly not one of the presets: a debugging affordance that happens to live
+   in the same panel. */
+.duration--dev {
+  width: 100%;
+  margin-top: var(--space-sm);
+  border-style: dashed;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
 }
 
 .duration--selected {

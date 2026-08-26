@@ -1,6 +1,7 @@
 <script setup>
 import BreathingProfileSelector from '../components/BreathingProfileSelector.vue'
 import DurationSelector from '../components/DurationSelector.vue'
+import { currentLocale, t } from '../services/i18n.js'
 import {
   begin,
   homeScreen,
@@ -14,8 +15,8 @@ import {
 <template>
   <main class="home">
     <header class="home__header">
-      <h1 class="home__title">Breathe</h1>
-      <p class="home__subtitle">A few quiet minutes, guided.</p>
+      <h1 class="home__title">{{ t('app.name') }}</h1>
+      <p class="home__subtitle">{{ t('app.tagline') }}</p>
     </header>
 
     <div class="home__panels">
@@ -31,10 +32,19 @@ import {
 
     <div class="home__actions">
       <!-- Always enabled: a profile and duration are always selected. -->
-      <button type="button" class="home__begin" @click="begin">Begin</button>
-      <button type="button" class="home__info" @click="homeScreen = 'info'">
-        About breathing exercises
-      </button>
+      <button type="button" class="home__begin" @click="begin">{{ t('home.begin') }}</button>
+
+      <nav class="home__menu" :aria-label="t('app.name')">
+        <button type="button" class="home__menu-item" @click="homeScreen = 'info'">
+          {{ t('home.about') }}
+        </button>
+        <button type="button" class="home__menu-item" @click="homeScreen = 'language'">
+          <!-- Shows the current language in its own name, so the way back is
+               recognisable whatever the interface is currently set to. -->
+          {{ t('home.language') }} &middot;
+          <span :lang="currentLocale.code">{{ currentLocale.label }}</span>
+        </button>
+      </nav>
     </div>
   </main>
 </template>
@@ -98,9 +108,16 @@ import {
   filter: brightness(1.15);
 }
 
-.home__info {
+.home__menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xs) var(--space-md);
+}
+
+.home__menu-item {
   min-height: var(--touch-min);
-  padding: 0 var(--space-md);
+  padding: 0 var(--space-sm);
   font-size: 0.9375rem;
   color: var(--color-text-muted);
   text-decoration: underline;
@@ -108,7 +125,7 @@ import {
   border-radius: var(--radius-pill);
 }
 
-/* Two columns once there is room (SPECS §12). Mobile-first: this is the
+/* Two columns once there is room (SPECS §13). Mobile-first: this is the
    enhancement, not the baseline. */
 @media (min-width: 40rem) {
   .home__panels {

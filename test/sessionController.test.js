@@ -21,7 +21,7 @@ function session(profileId, durationMinutes, clock) {
 
 describe('phase derivation', () => {
   // TECH_SPECS §28.2: across a cycle boundary, for every profile.
-  it.each(BREATHING_PROFILES)('follows $name across a cycle boundary', (profile) => {
+  it.each(BREATHING_PROFILES)('follows $id across a cycle boundary', (profile) => {
     const clock = fakeClock()
     const s = session(profile.id, 5, clock)
     const { inhaleMs, exhaleMs, cycleMs } = s

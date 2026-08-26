@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import BreathingCanvas from '../components/BreathingCanvas.vue'
 import SessionControls from '../components/SessionControls.vue'
 import SessionTimer from '../components/SessionTimer.vue'
+import { t } from '../services/i18n.js'
 import { PHASE } from '../services/sessionController.js'
 import {
   controller,
@@ -16,24 +17,26 @@ import {
 
 /**
  * The phase is conveyed in text as well as by the animation, so the breathing
- * state never depends on the visual alone (SPECS §14).
+ * state never depends on the visual alone (SPECS §15).
  */
-const phaseLabel = computed(() => (phase.value === PHASE.EXHALE ? 'Breathe out' : 'Breathe in'))
+const phaseLabel = computed(() =>
+  phase.value === PHASE.EXHALE ? t('session.exhale') : t('session.inhale'),
+)
 </script>
 
 <template>
   <main class="session">
-    <SessionTimer :label="remainingLabel" />
+    <SessionTimer :label="remainingLabel" :visible="isPaused" />
 
     <div class="session__guide">
       <BreathingCanvas v-if="controller" :controller="controller" />
 
       <div class="session__phase" :class="{ 'session__phase--paused': isPaused }">
         <p class="session__phase-text" aria-live="polite">
-          {{ isPaused ? 'Paused' : phaseLabel }}
+          {{ isPaused ? t('session.paused') : phaseLabel }}
         </p>
         <p v-if="pausedWhileAway" class="session__phase-note">
-          Your session paused while you were away.
+          {{ t('session.pausedAway') }}
         </p>
       </div>
     </div>
@@ -54,23 +57,31 @@ const phaseLabel = computed(() => (phase.value === PHASE.EXHALE ? 'Breathe out' 
   padding: var(--space-sm) 0;
 }
 
-/* The guide takes all the room left over: the breathing animation is the
-   screen, the controls are the margin (TECH_SPECS §11). */
+/* The guide takes all the height left over: the breathing animation is the
+   screen, the controls are the margin (TECH_SPECS §11). The bubble travels
+   vertically, so it stays a narrow centred column — a third of the window
+   width, never wider than the session column. */
 .session__guide {
   position: relative;
   flex: 1;
+  width: 33vw;
+  max-width: 100%;
   min-height: 12rem;
+  margin: 0 auto;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
 }
 
+/* Wider than the guide on purpose: the labels stay centred on the column but
+   spill past its edges rather than wrapping inside 33vw. */
 .session__phase {
   position: absolute;
-  inset: auto 0 0;
   top: 50%;
-  transform: translateY(-50%);
+  left: 50%;
+  width: max-content;
+  max-width: 90vw;
+  transform: translate(-50%, -50%);
   display: grid;
   gap: var(--space-xs);
   justify-items: center;

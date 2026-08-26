@@ -4,6 +4,8 @@ A calm, offline-capable Progressive Web App for guided breathing exercises.
 Pick a breathing profile and a duration, follow the bubble up as you breathe in
 and down as you breathe out.
 
+Available in English, Dutch, French, German, Italian and Spanish.
+
 No backend, no accounts, no tracking. The app is a set of static files.
 
 - **Product specification:** [SPECS.md](SPECS.md)
@@ -82,15 +84,17 @@ falls back to `index.html` for unknown paths.
 
 ```
 src/
-├── data/                    profiles, duration presets, resource links
+├── data/                    profiles, duration presets, resource links (no text)
+├── i18n/                    one message catalogue per language
 ├── services/
 │   ├── sessionController.js the state machine and all timing arithmetic
 │   ├── useSession.js        browser wiring: rAF loop, visibility, wake lock
+│   ├── i18n.js              locale state, lookup, interpolation, plurals
 │   ├── storage.js           localStorage preferences, degrades to memory
 │   ├── screenWakeLock.js    best-effort wake lock
 │   └── completionSound.js   iOS-safe audio unlock and playback
 ├── components/              selectors, canvas, controls, timer, dialogs
-├── views/                   Home, Breathing, Information
+├── views/                   Home, Breathing, Information, Language
 └── styles/main.css          the entire colour palette, as CSS variables
 ```
 
@@ -108,10 +112,35 @@ where the bubble should be. Dropped frames therefore cannot desynchronise the
 animation from the timer — a late frame simply draws the correct current
 position.
 
+**Every string lives in a catalogue.** `src/i18n/en.js` is the source and the
+fallback; the other five mirror it. The data modules deliberately hold no text —
+`breathingProfiles.js` has timings and ids, and the names and descriptions are
+looked up as `profile.<id>`. `t()` reads a reactive `locale` ref, which is the
+whole trick behind switching language with no reload and no i18n dependency.
+
 **Sessions pause themselves when you look away.** Hiding the tab or locking the
 phone pauses the session, so no time accrues and the session can never complete
 in the background. Resuming is always a deliberate user action. This is also
 what makes the wake lock simple: there is never a running session without one.
+
+## Adding a language
+
+1. Copy `src/i18n/en.js` to `src/i18n/<code>.js` and translate the values.
+2. Import it in `src/i18n/index.js`, add it to `MESSAGES`, and add a row to
+   `LOCALES` with the language's name **in that language** — never translated,
+   because the picker has to be readable by someone who cannot read the current
+   interface language.
+3. Run `make test`. The suite compares every catalogue against English for
+   identical keys and value shapes, and renders every parameterised string to
+   check no placeholder is left unfilled, so an incomplete translation fails
+   the build rather than shipping a half-translated screen.
+
+If the new language does not share the `n === 1` singular rule, extend `tp()` in
+`src/services/i18n.js`. Its callers do not change.
+
+One known limitation: the PWA manifest is generated at build time, so the
+*installed* app's name is English on every device regardless of the language
+chosen inside it. Localising that needs a build and manifest per language.
 
 ## Testing
 
@@ -121,8 +150,8 @@ make test
 
 The suite covers phase derivation for every profile, pause/resume position
 preservation, exclusion of paused time, end-of-session overflow, timer
-formatting, auto-pause on hidden documents, and that exiting never reaches the
-completed state. Animation smoothness and layout are checked by hand on a real
+formatting, auto-pause on hidden documents, that exiting never reaches the
+completed state, and translation coverage across all six languages. Animation smoothness and layout are checked by hand on a real
 device.
 
 ## Browser support notes

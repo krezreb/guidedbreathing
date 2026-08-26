@@ -58,6 +58,23 @@ The set is deliberately non-linear: fine-grained at the short end, coarser as
 sessions get longer. It must be defined in one place (see the technical
 specification) so that presets can be added or changed without touching UI code.
 
+These eight are the whole of the product. Behind a feature flag the application
+also offers a **one-breath duration** — a single inhale followed by a single
+exhale, after which the session completes normally. It exists so that the
+end-of-session behaviour (completion animation, sound and message) can be
+exercised in seconds rather than a full minute.
+
+The flag is off unless the URL asks for it:
+
+```text
+?devduration=1
+```
+
+It is therefore not part of what the application offers a user, and is not
+translated. A one-breath duration selected while the flag was on is discarded on
+a later visit without it, rather than being restored from the remembered
+preferences.
+
 The selected duration determines the total length of the breathing session.
 
 The duration timer begins when the session starts and stops when the session is paused.
@@ -98,6 +115,16 @@ A prominent **Begin** button starts the breathing session using the selected pro
 A profile and a duration are always selected — defaults on first run, the
 last-used values thereafter — so **Begin** is always enabled. It starts a session
 using whatever is currently selected.
+
+### 4.4 Menu
+
+Below the **Begin** button the main screen offers a small menu:
+
+- **About breathing exercises** — opens the informational section (§10).
+- **Language** — opens the language screen (§11).
+
+The menu is deliberately confined to the main screen. The session screen shows
+only the breathing guide and its controls.
 
 ## Default Selection
 
@@ -149,7 +176,11 @@ The phase indicator should change in synchronization with the bubble animation.
 
 ## 5.3 Session Timer
 
-The screen should display the remaining session time.
+The remaining session time must not be displayed while the session is running: a
+visible clock invites the user to watch it instead of the breath.
+
+It is shown only when the session is paused, and in the exit confirmation
+dialog, where the user is deciding rather than breathing.
 
 The timer represents the total remaining duration of the session, not the duration of the current breathing phase.
 
@@ -406,7 +437,75 @@ Placeholders must be obviously unfinished rather than looking like working links
 
 ---
 
-# 11. PWA Requirements
+---
+
+# 11. Language
+
+The interface is available in six languages: English, Dutch, French, German,
+Italian and Spanish.
+
+## 11.1 Choosing a Language
+
+The main screen's menu (§4.4) includes a **Language** item that opens the
+language screen. The item shows the language currently in use, written in that
+language's own name, so it stays recognisable whatever the interface is set to.
+
+The language screen lists every available language, each written in its own
+name — **never translated**. A language picker has to be readable by someone who
+cannot read the current interface language, which is precisely the person most
+likely to be looking for it.
+
+Choosing a language applies immediately across every screen, and is remembered
+on the device.
+
+The screen offers two ways back to the main screen: the back link in the header,
+and an **OK** button at the foot of the list, for the reader whose eye stays on
+the list and never travels back up to the header.
+
+## 11.2 Default Language
+
+On first open the application uses the browser's preferred language when that is
+one of the supported languages, and English otherwise. A regional tag matches
+its language: `fr-CA` selects French.
+
+A merely detected language is **not** persisted. Only an explicit choice is
+remembered, so until the user overrides it the application keeps following the
+device's language setting.
+
+## 11.3 Scope of Translation
+
+All user-visible text is translated, including:
+
+- Breathing profile names and descriptions.
+- The breathing phase indicator.
+- Session controls, the exit dialog and the completion message.
+- The whole informational section.
+- Accessible labels that are never shown on screen.
+
+No user-visible text may be embedded in application logic, component markup or
+data modules.
+
+Three things are deliberately **not** translated:
+
+- The language names in the picker, for the reason given in §11.1.
+- The remaining-time display, which is digits and a colon.
+- The installed application's name, for the reason given in §11.4.
+
+## 11.4 Known Limitation: the Installed Name
+
+The web app manifest is generated once at build time, so the name and
+description of the *installed* application are English on every device, whatever
+language is chosen inside the app. Localising them would require a separate
+build and manifest per language. That is out of scope for this version, and the
+application's own interface is unaffected.
+
+## 11.5 Language and the Session
+
+The language can be changed at any time from the main screen, but not during a
+session: the session screen carries no menu, as the design principles require.
+
+---
+# 12. PWA Requirements
 
 The application must be implemented as a Progressive Web Application.
 
@@ -423,7 +522,7 @@ The application should:
 
 ---
 
-# 12. Mobile and Responsive Design
+# 13. Mobile and Responsive Design
 
 The application must work well on:
 
@@ -456,7 +555,7 @@ The breathing session itself should work in both portrait and landscape orientat
 
 ---
 
-# 13. Design Principles
+# 14. Design Principles
 
 The visual design should reinforce relaxation and simplicity.
 
@@ -476,7 +575,7 @@ The breathing session should be the central experience rather than a feature-hea
 
 ---
 
-# 14. Accessibility
+# 15. Accessibility
 
 The application should be usable by people with different levels of visual and motor ability.
 
@@ -498,7 +597,7 @@ in text, so the animation is never the sole channel for the breathing state.
 
 ---
 
-# 15. Audio
+# 16. Audio
 
 A short sound must be played when a session is successfully completed.
 
@@ -518,7 +617,7 @@ The application should not require continuous audio during the breathing session
 
 ---
 
-# 16. User Flow
+# 17. User Flow
 
 ## Standard flow
 
@@ -576,7 +675,7 @@ Session     Main Screen
 
 ---
 
-# 17. Functional Requirements
+# 18. Functional Requirements
 
 ### FR-01 — Profile Selection
 The user must be able to select one of four predefined breathing profiles.
@@ -597,7 +696,9 @@ The application must visually represent inhalation and exhalation through the ve
 Bubble movement and the breathing phase indicator must match the configured inhale/exhale durations.
 
 ### FR-07 — Session Timer
-The application must display the remaining total active session time.
+The application must track the remaining total active session time, and display
+it only while the session is paused and in the exit confirmation dialog — never
+during active breathing.
 
 ### FR-08 — Pause
 The user must be able to pause an active session.
@@ -647,9 +748,15 @@ The application must provide accessible controls, sufficient contrast, and keybo
 ### FR-23 — Automatic Pause
 The application must pause the session automatically when it becomes hidden or the device screen is locked, and must not resume without an explicit user action.
 
+### FR-24 — Language Selection
+The user must be able to choose the interface language from the main screen. The choice must apply immediately across every screen and be remembered on the device.
+
+### FR-25 — Translated Interface
+All user-visible text, including accessible labels, must come from message catalogues rather than being embedded in application logic, component markup or data modules.
+
 ---
 
-# 18. Non-Functional Requirements
+# 19. Non-Functional Requirements
 
 ### Performance
 
@@ -672,7 +779,7 @@ No user data should be collected unless explicitly required by a future feature.
 
 ---
 
-# 19. Future Extensibility
+# 20. Future Extensibility
 
 The initial implementation should keep the breathing profiles and durations easy to extend.
 

@@ -14,7 +14,7 @@ import { computed, ref, shallowRef } from 'vue'
 import { createSession, formatRemaining, PAUSE_REASON, SESSION_STATE } from './sessionController.js'
 import { profileOrDefault, DEFAULT_PROFILE_ID } from '../data/breathingProfiles.js'
 import { durationOrDefault, DEFAULT_DURATION_MINUTES } from '../data/durations.js'
-import { loadPreferences, savePreferences } from './storage.js'
+import { loadPreferences, updatePreferences } from './storage.js'
 import * as wakeLock from './screenWakeLock.js'
 import * as sound from './completionSound.js'
 
@@ -28,7 +28,7 @@ export const selectedDurationMinutes = ref(
   durationOrDefault(stored.durationMinutes ?? DEFAULT_DURATION_MINUTES),
 )
 
-/** 'home' | 'info' — which non-session screen is showing. */
+/** 'home' | 'info' | 'language' — which non-session screen is showing. */
 export const homeScreen = ref('home')
 
 export const sessionState = ref(SESSION_STATE.IDLE)
@@ -129,7 +129,7 @@ export function selectDuration(minutes) {
 }
 
 function persist() {
-  savePreferences({
+  updatePreferences({
     profileId: selectedProfileId.value,
     durationMinutes: selectedDurationMinutes.value,
   })
@@ -172,18 +172,35 @@ export function togglePause() {
   else if (sessionState.value === SESSION_STATE.PAUSED) resume()
 }
 
+/**
+ * True when the exit dialog paused a running session itself, so Cancel knows
+ * whether to resume. A session the user had already paused stays paused.
+ */
+let resumeAfterExitCancel = false
+
+/** Asking about exiting stops the guide: nothing keeps breathing behind the
+ *  dialog while the user decides (SPECS §6.3). */
 export function requestExit() {
   if (!isSessionActive.value) return
+  if (sessionState.value === SESSION_STATE.RUNNING) {
+    pause()
+    resumeAfterExitCancel = true
+  }
   exitConfirmVisible.value = true
 }
 
 export function cancelExit() {
   exitConfirmVisible.value = false
+  const shouldResume = resumeAfterExitCancel
+  resumeAfterExitCancel = false
+  // Not while the app is hidden: the auto-pause owns that case.
+  if (shouldResume && !document.hidden) resume()
 }
 
 /** Discards the session. Never reaches COMPLETED, so no sound and no message. */
 export function confirmExit() {
   exitConfirmVisible.value = false
+  resumeAfterExitCancel = false
   const active = controller.value
   if (active) active.exit()
   teardown()
@@ -195,6 +212,7 @@ export function returnHome() {
 }
 
 function teardown() {
+  resumeAfterExitCancel = false
   stopLoop()
   wakeLock.release()
   releaseHistoryEntry()
