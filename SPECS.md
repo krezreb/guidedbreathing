@@ -43,15 +43,20 @@ The breathing profile must not change during an active session.
 
 # 3. Session Duration
 
-The user must select a session duration before starting.
+The user selects a session duration from a fixed set of eight presets:
 
-Available durations range from **3 to 20 minutes**, in one-minute increments:
-
+- 1 minute
+- 2 minutes
 - 3 minutes
-- 4 minutes
 - 5 minutes
-- ...
+- 8 minutes
+- 10 minutes
+- 15 minutes
 - 20 minutes
+
+The set is deliberately non-linear: fine-grained at the short end, coarser as
+sessions get longer. It must be defined in one place (see the technical
+specification) so that presets can be added or changed without touching UI code.
 
 The selected duration determines the total length of the breathing session.
 
@@ -82,7 +87,7 @@ Each profile should display its inhale/exhale timings so that the user understan
 
 ### 4.2 Duration Selection
 
-The user can select a duration between 3 and 20 minutes.
+The user can select one of the eight preset durations.
 
 The currently selected duration must be visually distinguishable.
 
@@ -90,13 +95,14 @@ The currently selected duration must be visually distinguishable.
 
 A prominent **Begin** button starts the breathing session using the selected profile and duration.
 
-The Begin button should be disabled or otherwise unavailable until valid profile and duration selections exist.
+A profile and a duration are always selected — defaults on first run, the
+last-used values thereafter — so **Begin** is always enabled. It starts a session
+using whatever is currently selected.
 
 ## Default Selection
 
-The application should provide sensible defaults when first opened.
-
-Suggested defaults:
+On first open, before any preference has been persisted, the application
+defaults to:
 
 - Profile: **Beginner**
 - Duration: **5 minutes**
@@ -128,7 +134,7 @@ Move downward for 8 seconds → EXHALE
 Repeat
 ```
 
-The animation continues until the configured session duration has elapsed.
+The animation continues until the session ends (see §7.1).
 
 ## 5.2 Breathing Phase Indicator
 
@@ -236,6 +242,31 @@ Selecting **Exit** terminates the session and returns to the main screen.
 
 ---
 
+## 6.4 Automatic Pause
+
+The session pauses itself whenever the application stops being visible to the
+user — the tab is hidden or backgrounded, the app is switched away from, or the
+device screen is locked.
+
+This is treated as an ordinary pause: the state becomes `PAUSED`, the exact
+breathing position and remaining session time are preserved, and paused time does
+not count toward the session duration.
+
+Rationale: a guided breathing session the user cannot see is not a session. Time
+must not accumulate while the screen is off, and the session must never complete
+in the background.
+
+When the application becomes visible again the session remains paused. The user
+resumes it deliberately with the **Resume** control; the application must not
+resume on its own, because the user's attention has been elsewhere.
+
+The paused state may indicate that the pause was automatic, for example:
+
+> **Paused**
+> Your session paused while you were away.
+
+---
+
 # 7. Session Completion
 
 When the session reaches the selected duration:
@@ -254,6 +285,26 @@ Example:
 The completion sound should be short, gentle, and non-intrusive.
 
 The completion event must only occur when the full configured session duration has elapsed. Exiting a session must never trigger the completion state.
+
+## 7.1 Overflow at the End of a Session
+
+The configured duration is a **minimum** of active breathing time, not a hard cut.
+
+Breathing phase durations are never truncated. Most profile/duration combinations
+do not divide evenly — the Beginner profile has an 8-second cycle, so a 5-minute
+session lands 4 seconds into an exhale — and cutting a breath short is worse than
+running slightly long.
+
+**A session always finishes on a completed exhale.**
+
+When the configured duration elapses mid-cycle, the session continues at the
+profile's normal timing until the current exhale finishes, and then completes. If
+the duration elapses during an inhale, that inhale is completed and the following
+exhale is run in full. Overflow is therefore always less than one breathing
+cycle, and the session never ends at the top of a breath.
+
+During the overflow the remaining-time display floors at `00:00`; it must never
+show a negative value.
 
 ---
 
@@ -278,8 +329,10 @@ IDLE
 RUNNING
 PAUSED
 COMPLETED
-EXITED
 ```
+
+`EXITED` is not a state. Exiting is a transition that returns the application
+directly to `IDLE` and discards the session.
 
 ## State transitions
 
@@ -288,26 +341,17 @@ IDLE
   │
   │ Begin
   ▼
-RUNNING
+RUNNING ──────────── Exit ──────────────→ IDLE (Main Screen)
   │  │
-  │  └── Exit ──→ EXITED → Main Screen
+  │  └── Pause, or app hidden / screen locked
+  │            ↓
+  │          PAUSED ─────── Exit ────────→ IDLE (Main Screen)
+  │            │
+  │            └── Resume ──→ RUNNING
   │
-  └── Pause
-        ↓
-      PAUSED
-        │  │
-        │  └── Exit ──→ EXITED → Main Screen
-        │
-        └── Resume
-              ↓
-           RUNNING
-              │
-              │ Duration elapsed
-              ▼
-          COMPLETED
-              │
-              ▼
-         Main Screen
+  └── Duration elapsed (then current exhale finishes)
+            ↓
+        COMPLETED ──── Return ───────────→ IDLE (Main Screen)
 ```
 
 ---
@@ -324,7 +368,10 @@ The application must ensure that:
 - The total session duration excludes time spent paused.
 - The breathing animation and phase indicator remain synchronized.
 - Completing a breathing phase transitions directly into the next phase.
-- The session ends when the configured active session time has elapsed.
+- The session ends once the configured active session time has elapsed and the
+  current exhale has finished (see §7.1).
+- Time spent hidden, backgrounded, or with the screen locked is paused time and
+  does not count toward the session duration.
 
 The implementation should use a timing mechanism appropriate for reliable animation and elapsed-time tracking rather than relying solely on repeated UI timers.
 
@@ -344,6 +391,18 @@ This section should contain:
 The application should avoid making medical claims or presenting breathing exercises as a treatment for medical conditions.
 
 External resources should open appropriately for the PWA environment without unnecessarily disrupting the application.
+
+## 10.1 External Links — Stubbed for V1
+
+The specific external resources have not been chosen yet. For this version the
+links section is **stubbed**: the informational screen includes the section and
+its layout, populated with clearly marked placeholder entries.
+
+The link list must live in a single data structure so that real URLs can be
+dropped in later without touching the informational screen's markup.
+
+Placeholders must be obviously unfinished rather than looking like working links
+— no invented URLs, and no external destination that has not been reviewed.
 
 ---
 
@@ -382,10 +441,10 @@ On larger screens, the main configuration screen should use the intended two-col
 │                                         │
 │   BREATHING PROFILES    DURATION        │
 │                                         │
-│   Strengthen             5 minutes      │
-│   Chill                  10 minutes     │
-│   Balance                15 minutes     │
-│   Beginner               20 minutes     │
+│   Strengthen            1   2   3       │
+│   Chill                 5   8   10      │
+│   Balance               15  20          │
+│   Beginner                              │
 │                                         │
 │              [ BEGIN ]                  │
 └─────────────────────────────────────────┘
@@ -428,10 +487,14 @@ The interface should:
 - Maintain sufficient text/background contrast.
 - Not rely exclusively on color to communicate the breathing phase.
 - Provide accessible labels for buttons and interactive controls.
-- Ensure keyboard navigation works on desktop.
-- Respect the user's reduced-motion preference where practical.
+- Ensure keyboard navigation works on desktop, including `Space` to pause and
+  resume and `Escape` to exit while a session is running.
 
-If reduced motion is enabled, the application should provide an alternative visual representation of the breathing state while maintaining the correct breathing timing.
+A reduced-motion alternative to the breathing animation is **out of scope** for
+this version. The moving bubble is the core of the experience and a smooth,
+slow, single-axis motion is itself calming rather than agitating; a static
+substitute would not represent the exercise. The phase is always also conveyed
+in text, so the animation is never the sole channel for the breathing state.
 
 ---
 
@@ -446,6 +509,10 @@ The sound should:
 - Clearly indicate completion.
 - Not play when the user exits a session.
 - Not play when the session is paused.
+- Not play while the application is hidden or the device is locked. Because the
+  session auto-pauses in those cases (§6.4), completion cannot occur while the
+  user is away, so the sound only ever plays to a user who is looking at or
+  listening to an unlocked device.
 
 The application should not require continuous audio during the breathing session unless this is added as a future feature.
 
@@ -518,7 +585,7 @@ The user must be able to select one of four predefined breathing profiles.
 Each profile must use its predefined inhale/exhale durations.
 
 ### FR-03 — Duration Selection
-The user must be able to select a session duration from 3–20 minutes in one-minute increments.
+The user must be able to select a session duration from the eight presets: 1, 2, 3, 5, 8, 10, 15 and 20 minutes.
 
 ### FR-04 — Session Start
 Pressing **Begin** must start a session using the selected profile and duration.
@@ -554,7 +621,7 @@ The application should ask for confirmation before terminating an active or paus
 Exiting a session must discard the current session and must not trigger the completion state.
 
 ### FR-15 — Session Completion
-The session must automatically end when the selected active duration has elapsed.
+The session must automatically end once the selected active duration has elapsed and the current exhale has finished, without truncating any breathing phase.
 
 ### FR-16 — Completion Notification
 The application must play a short completion sound when the session finishes successfully.
@@ -575,7 +642,10 @@ The application must be installable and usable as a PWA on supported browsers.
 The core breathing functionality should remain usable without an active internet connection after the application has been initially loaded or installed.
 
 ### FR-22 — Accessibility
-The application must provide accessible controls, sufficient contrast, keyboard navigation where applicable, and should respect reduced-motion preferences.
+The application must provide accessible controls, sufficient contrast, and keyboard navigation where applicable.
+
+### FR-23 — Automatic Pause
+The application must pause the session automatically when it becomes hidden or the device screen is locked, and must not resume without an explicit user action.
 
 ---
 

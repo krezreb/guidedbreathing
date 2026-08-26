@@ -72,6 +72,11 @@ The application should use Vue's current recommended component-based architectur
 
 Components should be reasonably small and focused on a single responsibility.
 
+**No client-side router.** There are three screens and no shareable URLs, so
+screen selection is driven by application state alone. `vue-router` must not be
+added. See §6.1 for the one place this needs care: the Android hardware back
+button.
+
 Suggested structure:
 
 ```text
@@ -126,6 +131,17 @@ Vue remains responsible for:
 
 The p5.js layer should not become the source of truth for session state.
 
+p5.js must be used in **instance mode**, with the sketch created when the
+breathing view mounts and `sketch.remove()` called when it unmounts. p5 installs
+its own animation loop and global event listeners; failing to tear the instance
+down leaks a running sketch on every session after the first.
+
+Note the size trade-off: p5.js is a large library relative to what the animation
+needs, which is in tension with the fast-start requirement. Import it so that the
+bundler can drop what is unused, keep it out of the initial critical path where
+practical, and load the breathing view's sketch lazily so the main screen paints
+without waiting for it.
+
 ## 4.1 Breathing Animation
 
 The animation consists of a bubble moving vertically inside a rectangular area.
@@ -150,6 +166,16 @@ Conceptually:
 The bubble position must be calculated from actual session elapsed time rather than relying on frame count.
 
 This ensures that timing remains correct if the browser temporarily drops animation frames.
+
+### Easing
+
+Motion should be eased rather than strictly linear, so that the bubble slows as
+it approaches each extreme the way breath does. A smoothstep or half-cosine ease
+over the phase's normalised progress is sufficient.
+
+The easing function must map phase progress `0 → 1` onto position `0 → 1`
+exactly, so the bubble reaches each extreme precisely when the phase ends. Easing
+changes the *velocity* within a phase and must never change its *duration*.
 
 ## 4.2 Animation Timing
 
@@ -192,25 +218,74 @@ This prevents timer drift caused by:
 - Background throttling.
 - Variable animation frame rates.
 
-The session controller should maintain:
+## 5.1 Single Accumulated Elapsed Time
+
+The session controller should keep **one** authoritative number — the total
+*active* elapsed time — and derive everything else from it:
 
 ```text
-sessionStartTime
-pausedAt
-totalPausedDuration
-sessionDuration
-currentPhase
-phaseStartTime
+activeElapsedMs      accumulated active time (the only stored progress)
+runStartedAt         performance.now() when the current RUNNING span began
+sessionDurationMs    configured duration
+state                IDLE | RUNNING | PAUSED | COMPLETED
 ```
 
-or an equivalent representation.
+```text
+elapsed()  =  activeElapsedMs + (state === RUNNING ? now() - runStartedAt : 0)
 
-The exact implementation is flexible as long as the following behavior is guaranteed:
+pause()    =  activeElapsedMs += now() - runStartedAt
+resume()   =  runStartedAt = now()
+```
+
+The breathing phase and the bubble position are then *derived*, never stored:
+
+```text
+cycleMs        = inhaleMs + exhaleMs
+positionInCycle = elapsed() % cycleMs
+phase           = positionInCycle < inhaleMs ? INHALE : EXHALE
+phaseProgress   = phase === INHALE
+                    ? positionInCycle / inhaleMs
+                    : (positionInCycle - inhaleMs) / exhaleMs
+```
+
+This is preferred over tracking `phaseStartTime`, `pausedAt` and
+`totalPausedDuration` separately. With a single accumulator there is no second
+copy of progress that can drift out of step, and the pause/resume requirements
+(FR-09, FR-10, FR-11) hold arithmetically rather than by careful bookkeeping:
+pausing stops adding to `elapsed()`, and resuming continues from the same
+`positionInCycle` mid-phase by construction.
+
+The following behavior must be guaranteed:
 
 - Active time is measured accurately.
 - Paused time is excluded.
 - Resuming does not restart the current breathing phase.
 - Animation and session timer remain synchronized.
+
+## 5.2 Session End and Overflow
+
+The session ends when the configured duration has elapsed **and** the current
+exhale has finished — phase durations are never truncated (see product
+specification §7.1):
+
+```text
+complete  when  elapsed() >= sessionDurationMs
+                and positionInCycle has wrapped to the start of a new cycle
+```
+
+Equivalently: once `elapsed() >= sessionDurationMs`, wait until
+`elapsed() % cycleMs` returns to 0, then transition to `COMPLETED`. The session
+therefore always ends on a completed exhale and overflows by less than one
+breathing cycle.
+
+## 5.3 Timer Display
+
+The remaining time is `sessionDurationMs - elapsed()`, clamped at zero and
+rounded **up** to the next whole second before formatting as `M:SS`.
+
+Rounding up avoids displaying `0:00` for a full second before the session
+actually ends; the clamp keeps the display at `0:00` during the overflow rather
+than showing a negative value.
 
 ---
 
@@ -225,7 +300,7 @@ IDLE
  ▼
 RUNNING
  │  │
- │  └── Pause
+ │  └── Pause, or document hidden
  │        ↓
  │      PAUSED
  │        │
@@ -235,14 +310,40 @@ RUNNING
  │
  ├── Exit → IDLE
  │
- └── Duration elapsed
+ └── Duration elapsed, then current exhale finishes
           ↓
        COMPLETED
           ↓
          IDLE
 ```
 
-The session state must not be inferred solely from UI visibility.
+There are exactly four states. `EXITED` is not one of them: exiting is a
+transition that discards the session and returns directly to `IDLE`.
+
+The session state must not be inferred solely from UI visibility. Conversely,
+which screen is shown is derived from the state — the state machine is the single
+source of truth for both.
+
+## 6.1 Document Visibility
+
+A `visibilitychange` listener must pause a `RUNNING` session whenever
+`document.hidden` becomes true. This covers tab switches, app backgrounding and
+device screen lock, and is what guarantees that no session time accrues and no
+completion fires while the user is away.
+
+Becoming visible again does **not** auto-resume; the session stays `PAUSED` until
+the user acts.
+
+`pagehide` should be treated the same way as a defensive fallback, since iOS
+Safari does not always deliver `visibilitychange` reliably on app switch.
+
+## 6.2 Android Hardware Back Button
+
+With no router, the back button would otherwise leave the application entirely
+mid-session. Push a single history entry when a session starts and listen for
+`popstate`: while a session is active, `popstate` opens the exit confirmation
+dialog instead of navigating away, and the entry is dropped when the session
+ends. This needs no router — just `history.pushState` and one listener.
 
 ---
 
@@ -368,7 +469,16 @@ Therefore:
 - The breathing session must continue normally without it.
 - The application should not display an error merely because wake lock is unsupported.
 
-If a wake lock is released by the operating system or browser while the session is still active, the application should attempt to reacquire it when appropriate, subject to browser permissions and lifecycle restrictions.
+Browsers release the wake lock automatically whenever the document becomes
+hidden, and `navigator.wakeLock.request()` rejects if called while hidden. The
+automatic-pause behavior (§6.1) makes this straightforward: the wake lock is
+acquired on session start and on **Resume**, and released on pause, exit and
+completion. Because the session pauses whenever the document is hidden, there is
+never a `RUNNING` session without a lock, and no reacquisition needs to be
+attempted from a hidden document.
+
+Every wake lock call must be wrapped so that a rejected promise or a missing API
+is silently ignored.
 
 No special permission should be requested if the browser's Wake Lock API does not require one.
 
@@ -474,6 +584,18 @@ The build must include the audio asset in the generated static distribution.
 
 The application should use a web-compatible audio format supported by the target browsers.
 
+## 12.1 Unlocking Audio on iOS
+
+The completion sound plays minutes after the last user interaction. iOS Safari
+does not permit that unless audio has been unlocked by a user gesture, so the
+audio context must be created or resumed **on the Begin tap** and the decoded
+buffer held for the whole session. Deferring audio setup to the completion event
+will fail silently on iPhone.
+
+The iOS ringer switch still mutes Web Audio output, and nothing can be done about
+that. Completion must not depend on the sound: if playback fails or is inaudible,
+the session still completes and the congratulatory message is still displayed.
+
 ---
 
 # 13. External Information Links
@@ -483,6 +605,14 @@ The informational section may contain links to external resources.
 These links are the only expected runtime network dependencies outside the application's own static assets.
 
 The core application must remain functional when those external websites are unavailable.
+
+The actual resources are **not yet chosen** — see product specification §10.1.
+V1 ships a placeholder list held in a single data module, so that populating it
+later is a data change only. No invented or unreviewed URLs.
+
+Any external link must open in a new context with `rel="noopener noreferrer"`, so
+that leaving for a resource does not tear down a running application in
+standalone PWA mode.
 
 ---
 
@@ -498,6 +628,7 @@ Suggested targets:
 make install
 make dev
 make build
+make test
 make docker
 make deploy
 make clean
@@ -615,6 +746,24 @@ The deployment process should:
 5. Upload JavaScript/CSS/assets correctly.
 6. Upload the service worker correctly.
 7. Make the static application available through the configured S3 hosting setup.
+8. Set `Cache-Control` headers correctly per asset class.
+
+## 18.1 Cache-Control
+
+Getting this wrong is the standard way a PWA pins users to a stale build, so it
+is a requirement rather than an optimization:
+
+| Path | Cache-Control |
+|---|---|
+| `assets/**` (content-hashed filenames) | `public, max-age=31536000, immutable` |
+| `index.html` | `no-cache` |
+| `sw.js` | `no-cache` |
+| `manifest.webmanifest` | `no-cache` |
+| `icons/**` | `public, max-age=604800` |
+
+Deploy the long-lived hashed assets first and the no-cache entry points last, so
+that a freshly fetched `index.html` never references assets that are not yet
+uploaded.
 
 AWS credentials and bucket configuration must not be hard-coded.
 
@@ -801,6 +950,11 @@ Required core dependencies:
 
 No UI framework is required unless it provides a clear benefit.
 
+`vue-router` must **not** be added — see §3.1.
+
+A unit test runner (Vitest, as the natural fit for Vite) is required as a
+development dependency; see §28.
+
 The interface should primarily use custom CSS to maintain the lightweight, calm visual design.
 
 ---
@@ -814,6 +968,7 @@ The Makefile must expose at least the following workflows:
 | `make install` | Install development dependencies |
 | `make dev` | Start local development server |
 | `make build` | Create optimized production build |
+| `make test` | Run the unit test suite |
 | `make docker` | Build production Docker image |
 | `make deploy` | Build and deploy static files to AWS S3 |
 | `make clean` | Remove generated build artifacts |
@@ -833,7 +988,7 @@ The implementation is considered complete when:
 - [ ] The application runs entirely client-side.
 - [ ] No backend is required.
 - [ ] Four breathing profiles are available.
-- [ ] Durations from 3–20 minutes are available.
+- [ ] The eight duration presets (1, 2, 3, 5, 8, 10, 15, 20 minutes) are available.
 - [ ] Profile selection works.
 - [ ] Duration selection works.
 - [ ] A session can be started.
@@ -844,6 +999,9 @@ The implementation is considered complete when:
 - [ ] Pausing preserves the exact breathing position.
 - [ ] A session can be resumed.
 - [ ] Resuming does not restart the current breathing phase.
+- [ ] The session auto-pauses when hidden or when the screen locks.
+- [ ] A session never completes while the application is hidden.
+- [ ] The session ends on a completed exhale, without truncating a phase.
 - [ ] A session can be exited.
 - [ ] Exiting does not trigger completion.
 - [ ] Session completion triggers a sound.
@@ -870,24 +1028,62 @@ The implementation is considered complete when:
 - [ ] The application attempts to acquire a screen wake lock when a session starts.
 - [ ] Wake lock is released when the session ends or exits.
 - [ ] Wake lock failure does not prevent the session from running.
-- [ ] The application attempts to reacquire the wake lock when appropriate after it is unexpectedly released.
+- [ ] The wake lock is acquired on Resume as well as on Begin.
 
 ### Build
 
 - [ ] `make dev` starts local development.
 - [ ] `make build` creates a production build.
+- [ ] `make test` runs the unit suite and it passes.
 - [ ] Production JavaScript is minified.
 - [ ] Production CSS is minified.
 - [ ] All runtime assets are bundled.
 - [ ] No Vue/p5.js/CDN dependency exists at runtime.
 - [ ] `make docker` produces a working static web server image.
 - [ ] `make deploy` builds and deploys the application to S3.
+- [ ] Deployed assets carry the Cache-Control headers from §18.1.
 - [ ] AWS credentials are not embedded in the application.
 - [ ] The Docker image contains only the required production artifacts.
 
 ---
 
-# 28. Out of Scope
+# 28. Testing
+
+The core value of this application is timing precision, and timing is the one
+thing that cannot be verified by looking at the UI. The session controller must
+therefore be testable without a browser, a canvas, or a stopwatch.
+
+## 28.1 Injectable Clock
+
+The session controller must take its time source as a parameter, defaulting to
+`performance.now`. Tests then drive it with a fake clock and assert exact values
+rather than sleeping and hoping.
+
+The controller must contain no DOM access, no p5.js references and no Vue
+component code — only state and arithmetic.
+
+## 28.2 Required Test Coverage
+
+At minimum:
+
+- Phase derivation across a cycle boundary for each of the four profiles.
+- Pause at a known offset mid-inhale, resume much later, assert the phase and the
+  remaining phase time are unchanged (FR-09, FR-10).
+- Paused time excluded from session progress (FR-11).
+- Overflow: a Beginner-profile 5-minute session completes at the end of an
+  exhale, later than 300s but by less than one cycle (§5.2).
+- Remaining-time formatting, including the `0:00` clamp during overflow.
+- Automatic pause on document hidden, and no auto-resume on visible (§6.1).
+- Exit from `RUNNING` and from `PAUSED` never reaches `COMPLETED` (FR-14).
+
+## 28.3 Non-goals
+
+Browser automation and visual regression testing are out of scope. Animation
+smoothness and layout are verified by hand on a real phone.
+
+---
+
+# 29. Out of Scope
 
 The initial implementation does not include:
 
