@@ -1,5 +1,6 @@
 <script setup>
 import { BREATHING_PROFILES } from '../data/breathingProfiles.js'
+import { t } from '../services/i18n.js'
 
 const props = defineProps({
   modelValue: { type: String, required: true },
@@ -9,8 +10,8 @@ const emit = defineEmits(['update:modelValue'])
 
 <template>
   <fieldset class="selector">
-    <legend class="selector__legend">Breathing profile</legend>
-    <div class="selector__options" role="group" aria-label="Breathing profile">
+    <legend class="selector__legend">{{ t('profile.legend') }}</legend>
+    <div class="selector__options" role="group" :aria-label="t('profile.legend')">
       <button
         v-for="profile in BREATHING_PROFILES"
         :key="profile.id"
@@ -20,11 +21,16 @@ const emit = defineEmits(['update:modelValue'])
         :aria-pressed="profile.id === props.modelValue"
         @click="emit('update:modelValue', profile.id)"
       >
-        <span class="option__name">{{ profile.name }}</span>
+        <span class="option__name">{{ t(`profile.${profile.id}.name`) }}</span>
         <span class="option__timing">
-          {{ profile.inhaleSeconds }}s in &middot; {{ profile.exhaleSeconds }}s out
+          {{
+            t('profile.timing', {
+              inhale: profile.inhaleSeconds,
+              exhale: profile.exhaleSeconds,
+            })
+          }}
         </span>
-        <span class="option__description">{{ profile.description }}</span>
+        <span class="option__description">{{ t(`profile.${profile.id}.description`) }}</span>
       </button>
     </div>
   </fieldset>
@@ -60,7 +66,7 @@ const emit = defineEmits(['update:modelValue'])
   text-align: left;
   background: var(--color-surface);
   /* Selection is marked by border and a left bar as well as colour, so it does
-     not rely on colour alone (SPECS §14). */
+     not rely on colour alone (SPECS §15). */
   border: 1px solid var(--color-border);
   border-left: 4px solid transparent;
   border-radius: var(--radius-md);

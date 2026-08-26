@@ -1,6 +1,12 @@
 <script setup>
 /** Guards against accidental exits (SPECS §6.3). */
 import { onMounted, ref } from 'vue'
+import { t } from '../services/i18n.js'
+
+defineProps({
+  /** The dialog carries the clock: the screen behind it is dimmed (SPECS §5.3). */
+  remainingLabel: { type: String, required: true },
+})
 
 defineEmits(['cancel', 'confirm'])
 
@@ -21,13 +27,19 @@ onMounted(() => {
       aria-labelledby="exit-title"
       aria-describedby="exit-body"
     >
-      <h2 id="exit-title" class="dialog__title">Exit session?</h2>
-      <p id="exit-body" class="dialog__body">Your current session will be lost.</p>
+      <h2 id="exit-title" class="dialog__title">{{ t('exitDialog.title') }}</h2>
+      <p id="exit-body" class="dialog__body">{{ t('exitDialog.body') }}</p>
+      <p class="dialog__remaining">
+        <span class="dialog__remaining-value">{{ remainingLabel }}</span>
+        <span>{{ t('session.remaining') }}</span>
+      </p>
       <div class="dialog__actions">
         <button ref="cancelButton" type="button" class="dialog__cancel" @click="$emit('cancel')">
-          Cancel
+          {{ t('exitDialog.cancel') }}
         </button>
-        <button type="button" class="dialog__confirm" @click="$emit('confirm')">Exit</button>
+        <button type="button" class="dialog__confirm" @click="$emit('confirm')">
+          {{ t('exitDialog.confirm') }}
+        </button>
       </div>
     </div>
   </div>
@@ -58,8 +70,26 @@ onMounted(() => {
 }
 
 .dialog__body {
-  margin: var(--space-sm) 0 var(--space-lg);
+  margin: var(--space-sm) 0 var(--space-sm);
   color: var(--color-text-muted);
+}
+
+.dialog__remaining {
+  margin: 0 0 var(--space-lg);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5ch;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.dialog__remaining-value {
+  font-size: 1.375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
 }
 
 .dialog__actions {

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import BreathingCanvas from '../components/BreathingCanvas.vue'
 import SessionControls from '../components/SessionControls.vue'
 import SessionTimer from '../components/SessionTimer.vue'
+import { t } from '../services/i18n.js'
 import { PHASE } from '../services/sessionController.js'
 import {
   controller,
@@ -16,24 +17,26 @@ import {
 
 /**
  * The phase is conveyed in text as well as by the animation, so the breathing
- * state never depends on the visual alone (SPECS §14).
+ * state never depends on the visual alone (SPECS §15).
  */
-const phaseLabel = computed(() => (phase.value === PHASE.EXHALE ? 'Breathe out' : 'Breathe in'))
+const phaseLabel = computed(() =>
+  phase.value === PHASE.EXHALE ? t('session.exhale') : t('session.inhale'),
+)
 </script>
 
 <template>
   <main class="session">
-    <SessionTimer :label="remainingLabel" />
+    <SessionTimer :label="remainingLabel" :visible="isPaused" />
 
     <div class="session__guide">
       <BreathingCanvas v-if="controller" :controller="controller" />
 
       <div class="session__phase" :class="{ 'session__phase--paused': isPaused }">
         <p class="session__phase-text" aria-live="polite">
-          {{ isPaused ? 'Paused' : phaseLabel }}
+          {{ isPaused ? t('session.paused') : phaseLabel }}
         </p>
         <p v-if="pausedWhileAway" class="session__phase-note">
-          Your session paused while you were away.
+          {{ t('session.pausedAway') }}
         </p>
       </div>
     </div>

@@ -1,4 +1,6 @@
 <script setup>
+import { t } from '../services/i18n.js'
+
 defineProps({
   paused: { type: Boolean, required: true },
 })
@@ -8,9 +10,11 @@ defineEmits(['toggle', 'exit'])
 <template>
   <div class="controls">
     <button type="button" class="controls__primary" @click="$emit('toggle')">
-      {{ paused ? 'Resume' : 'Pause' }}
+      {{ paused ? t('session.resume') : t('session.pause') }}
     </button>
-    <button type="button" class="controls__exit" @click="$emit('exit')">Exit</button>
+    <button type="button" class="controls__exit" @click="$emit('exit')">
+      {{ t('session.exit') }}
+    </button>
   </div>
 </template>
 

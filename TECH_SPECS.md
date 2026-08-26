@@ -112,6 +112,66 @@ src/
 
 The exact structure may be adjusted during implementation, but application logic should remain separated from presentation and animation code.
 
+## 3.2 Internationalisation
+
+The interface ships in six languages (product specification §11). Two rules
+follow from that, and everything else is detail:
+
+1. **No user-visible string may live outside a message catalogue** — not in
+   components, not in services, not in the data modules. `breathingProfiles.js`
+   holds timings and ids; the profile names and descriptions live under
+   `profile.<id>` in each catalogue. `resources.js` holds ids and urls; the
+   titles and notes live under `resources.<id>`.
+2. **English is the source and the fallback.** A key missing from a translation
+   resolves to English rather than rendering blank.
+
+```text
+src/
+├── i18n/
+│   ├── index.js        locale registry: catalogues + the picker list
+│   ├── en.js           the source catalogue
+│   └── de|es|fr|it|nl.js
+└── services/
+    └── i18n.js         locale state, lookup, interpolation, plurals
+```
+
+### No i18n library
+
+The application needs key lookup, `{name}` interpolation and a two-form plural.
+That is about forty lines, so it is written directly rather than adding a
+dependency, consistent with §25.
+
+Reactivity needs no plugin either: `t()` reads a `locale` ref, so any component
+that calls it while rendering re-renders when the language changes. Switching
+language updates every open screen with no reload and no event plumbing.
+
+### Plurals
+
+Counted strings use a `{ one, other }` pair. All six supported languages share
+the same rule for the values this application counts (1–20 minutes), so
+`count === 1` selects the singular. A language with a different rule would
+require extending `tp()`, never its callers.
+
+### Catalogue integrity
+
+Missing or misshapen translations are a silent failure mode: the interface
+renders, but with gaps. The test suite therefore compares every catalogue
+against the English one for identical key paths *and* identical value shapes,
+and renders every parameterised string in every language to confirm no
+placeholder is left unfilled.
+
+### Document language
+
+`document.documentElement.lang` must track the selected language. Assistive
+technology chooses a voice from it, and hyphenation depends on it. The document
+title follows the same way.
+
+### Bundling
+
+All six catalogues are bundled into the main chunk — together about 7 kB
+gzipped. Loading them eagerly keeps every language available offline and
+immediately, which is worth more than the transfer saved by splitting them.
+
 ---
 
 # 4. p5.js Animation
@@ -359,7 +419,14 @@ At minimum, the application should persist:
 
 - Last selected breathing profile.
 - Last selected session duration.
+- The explicitly chosen interface language, if any (§3.2). A language that was
+  merely detected from the browser is not written back, so the application keeps
+  following the device until the user chooses.
 - Any user-configurable application preferences introduced later.
+
+Preferences share a single storage key and have more than one writer — the main
+screen writes the profile and duration, the language screen writes the locale.
+Writes must therefore **merge** into the stored object rather than replace it.
 
 Suggested storage namespace:
 
@@ -952,6 +1019,8 @@ No UI framework is required unless it provides a clear benefit.
 
 `vue-router` must **not** be added — see §3.1.
 
+No internationalisation library is required either — see §3.2.
+
 A unit test runner (Vitest, as the natural fit for Vite) is required as a
 development dependency; see §28.
 
@@ -1007,6 +1076,12 @@ The implementation is considered complete when:
 - [ ] Session completion triggers a sound.
 - [ ] Session completion displays a congratulatory message.
 - [ ] The information section is available.
+- [ ] The interface is available in English, Dutch, French, German, Italian and Spanish.
+- [ ] A language can be chosen from the main screen and applies immediately everywhere.
+- [ ] The chosen language is persisted, and survives alongside the other preferences.
+- [ ] The browser's language is used on first open when it is supported.
+- [ ] Every catalogue is complete, and no rendered string is left with an unfilled placeholder.
+- [ ] No user-visible string remains outside the message catalogues.
 
 ### Persistence
 
@@ -1075,6 +1150,13 @@ At minimum:
 - Remaining-time formatting, including the `0:00` clamp during overflow.
 - Automatic pause on document hidden, and no auto-resume on visible (§6.1).
 - Exit from `RUNNING` and from `PAUSED` never reaches `COMPLETED` (FR-14).
+- Catalogue parity: every translation has the same key paths and value shapes as
+  English, and no extra keys (§3.2).
+- Every parameterised string, rendered in every language, contains no unfilled
+  `{placeholder}`.
+- Switching language re-renders the main screen, the session screen and the exit
+  dialog without a reload.
+- Locale detection from regional browser tags, and the English fallback.
 
 ## 28.3 Non-goals
 

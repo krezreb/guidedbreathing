@@ -39,8 +39,15 @@ export function loadPreferences() {
   }
 }
 
-export function savePreferences(preferences) {
-  const raw = JSON.stringify(preferences)
+/**
+ * Merge a patch into the stored preferences.
+ *
+ * Merging rather than replacing matters because there is more than one owner:
+ * the session screen writes the profile and duration, the language picker
+ * writes the locale, and neither should erase the other.
+ */
+export function updatePreferences(patch) {
+  const raw = JSON.stringify({ ...loadPreferences(), ...patch })
   // Kept regardless, so preferences at least survive within the session even
   // when localStorage refuses the write.
   memoryFallback = raw

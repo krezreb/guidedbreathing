@@ -1,6 +1,8 @@
 <script setup>
+import { t, tp } from '../services/i18n.js'
+
 defineProps({
-  profileName: { type: String, required: true },
+  profileId: { type: String, required: true },
   durationMinutes: { type: Number, required: true },
 })
 defineEmits(['done'])
@@ -9,13 +11,15 @@ defineEmits(['done'])
 <template>
   <section class="completion" aria-labelledby="completion-heading">
     <div class="completion__mark" aria-hidden="true"></div>
-    <h1 id="completion-heading" class="completion__title">Well done!</h1>
-    <p class="completion__body">You've completed your breathing session.</p>
+    <h1 id="completion-heading" class="completion__title">{{ t('completion.title') }}</h1>
+    <p class="completion__body">{{ t('completion.body') }}</p>
     <p class="completion__detail">
-      {{ profileName }} &middot; {{ durationMinutes }}
-      {{ durationMinutes === 1 ? 'minute' : 'minutes' }}
+      {{ t(`profile.${profileId}.name`) }} &middot;
+      {{ tp('duration.long', durationMinutes, { minutes: durationMinutes }) }}
     </p>
-    <button type="button" class="completion__action" @click="$emit('done')">Back to start</button>
+    <button type="button" class="completion__action" @click="$emit('done')">
+      {{ t('completion.action') }}
+    </button>
   </section>
 </template>
 

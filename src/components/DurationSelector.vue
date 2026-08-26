@@ -1,20 +1,17 @@
 <script setup>
 import { DURATION_PRESETS_MINUTES } from '../data/durations.js'
+import { t, tp } from '../services/i18n.js'
 
 const props = defineProps({
   modelValue: { type: Number, required: true },
 })
 const emit = defineEmits(['update:modelValue'])
-
-function label(minutes) {
-  return minutes === 1 ? '1 min' : `${minutes} min`
-}
 </script>
 
 <template>
   <fieldset class="selector">
-    <legend class="selector__legend">Duration</legend>
-    <div class="selector__grid" role="group" aria-label="Session duration">
+    <legend class="selector__legend">{{ t('duration.legend') }}</legend>
+    <div class="selector__grid" role="group" :aria-label="t('duration.legend')">
       <button
         v-for="minutes in DURATION_PRESETS_MINUTES"
         :key="minutes"
@@ -22,10 +19,10 @@ function label(minutes) {
         class="duration"
         :class="{ 'duration--selected': minutes === props.modelValue }"
         :aria-pressed="minutes === props.modelValue"
-        :aria-label="`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`"
+        :aria-label="tp('duration.long', minutes, { minutes })"
         @click="emit('update:modelValue', minutes)"
       >
-        {{ label(minutes) }}
+        {{ t('duration.short', { minutes }) }}
       </button>
     </div>
   </fieldset>
