@@ -292,8 +292,8 @@ The configured duration is a **minimum** of active breathing time, not a hard cu
 
 Breathing phase durations are never truncated. Most profile/duration combinations
 do not divide evenly — the Beginner profile has an 8-second cycle, so a 5-minute
-session lands 4 seconds into an exhale — and cutting a breath short is worse than
-running slightly long.
+session lands 4 seconds into a cycle, one second into an exhale — and cutting a
+breath short is worse than running slightly long.
 
 **A session always finishes on a completed exhale.**
 
