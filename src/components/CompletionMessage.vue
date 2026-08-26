@@ -1,11 +1,26 @@
 <script setup>
+import { computed } from 'vue'
+import { isDevDuration } from '../data/durations.js'
 import { t, tp } from '../services/i18n.js'
 
-defineProps({
+const props = defineProps({
   profileId: { type: String, required: true },
   durationMinutes: { type: Number, required: true },
 })
 defineEmits(['done'])
+
+/**
+ * The dev duration is a fraction of a minute, which `duration.long` would
+ * render as "0.0166… minutes" — on the very screen that duration exists to
+ * test. Label it for what it is instead. Untranslated, like the button that
+ * selects it: `isDevDuration` is false in a production build, so a user never
+ * sees this branch.
+ */
+const durationLabel = computed(() =>
+  isDevDuration(props.durationMinutes)
+    ? '1 breath (dev)'
+    : tp('duration.long', props.durationMinutes, { minutes: props.durationMinutes }),
+)
 </script>
 
 <template>
@@ -15,7 +30,7 @@ defineEmits(['done'])
     <p class="completion__body">{{ t('completion.body') }}</p>
     <p class="completion__detail">
       {{ t(`profile.${profileId}.name`) }} &middot;
-      {{ tp('duration.long', durationMinutes, { minutes: durationMinutes }) }}
+      {{ durationLabel }}
     </p>
     <button type="button" class="completion__action" @click="$emit('done')">
       {{ t('completion.action') }}

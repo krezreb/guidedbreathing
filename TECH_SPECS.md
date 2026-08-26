@@ -338,6 +338,20 @@ Equivalently: once `elapsed() >= sessionDurationMs`, wait until
 therefore always ends on a completed exhale and overflows by less than one
 breathing cycle.
 
+### The one-breath development duration
+
+A corollary of the rule above: **any** duration shorter than one cycle ends
+after exactly one complete inhale/exhale, whatever the profile. The development
+duration (product specification §3) is defined as one second and needs no
+special case in the controller — it is an ordinary session that happens to be
+shorter than every cycle.
+
+It is gated on `import.meta.env.DEV`, which Vite replaces with a literal at
+build time, so the guard is a compile-time constant and the duration is
+unreachable in a production build. It is also rejected by `isValidDuration`
+there, so a value persisted while developing cannot survive into production:
+`durationOrDefault` falls back to the 5-minute default.
+
 ## 5.3 Timer Display
 
 The remaining time is `sessionDurationMs - elapsed()`, clamped at zero and

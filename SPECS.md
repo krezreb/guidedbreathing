@@ -58,6 +58,13 @@ The set is deliberately non-linear: fine-grained at the short end, coarser as
 sessions get longer. It must be defined in one place (see the technical
 specification) so that presets can be added or changed without touching UI code.
 
+These eight are the whole of the product. Development builds additionally offer
+a **one-breath duration** — a single inhale followed by a single exhale, after
+which the session completes normally. It exists only so the end-of-session
+behaviour (completion animation, sound and message) can be exercised in seconds
+rather than a full minute. It must never be reachable in a production build, and
+it is not translated.
+
 The selected duration determines the total length of the breathing session.
 
 The duration timer begins when the session starts and stops when the session is paused.

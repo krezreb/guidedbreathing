@@ -1,5 +1,5 @@
 <script setup>
-import { DURATION_PRESETS_MINUTES } from '../data/durations.js'
+import { DEV_DURATION_MINUTES, DURATION_PRESETS_MINUTES, IS_DEV } from '../data/durations.js'
 import { t, tp } from '../services/i18n.js'
 
 const props = defineProps({
@@ -25,6 +25,24 @@ const emit = defineEmits(['update:modelValue'])
         {{ t('duration.short', { minutes }) }}
       </button>
     </div>
+
+    <!-- Development builds only: one inhale, one exhale, then the session
+         completes — enough to exercise the end-of-session animation, sound and
+         message without sitting through a real session. Deliberately not
+         translated: the catalogues hold user-visible copy, and `IS_DEV` is a
+         compile-time false in a production build, so this never renders for a
+         user (see data/durations.js). -->
+    <button
+      v-if="IS_DEV"
+      type="button"
+      class="duration duration--dev"
+      :class="{ 'duration--selected': DEV_DURATION_MINUTES === props.modelValue }"
+      :aria-pressed="DEV_DURATION_MINUTES === props.modelValue"
+      aria-label="Developer duration: a single breath in and out"
+      @click="emit('update:modelValue', DEV_DURATION_MINUTES)"
+    >
+      Dev &middot; 1 breath
+    </button>
   </fieldset>
 </template>
 
@@ -63,6 +81,17 @@ const emit = defineEmits(['update:modelValue'])
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   transition: background 200ms var(--ease-calm), border-color 200ms var(--ease-calm);
+}
+
+/* Visibly not one of the presets: a debugging affordance that happens to live
+   in the same panel. */
+.duration--dev {
+  width: 100%;
+  margin-top: var(--space-sm);
+  border-style: dashed;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
 }
 
 .duration--selected {

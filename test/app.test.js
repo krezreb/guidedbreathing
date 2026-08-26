@@ -8,8 +8,13 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createApp, nextTick } from 'vue'
 import App from '../src/App.vue'
+import CompletionMessage from '../src/components/CompletionMessage.vue'
 import { BREATHING_PROFILES } from '../src/data/breathingProfiles.js'
-import { DURATION_PRESETS_MINUTES } from '../src/data/durations.js'
+import {
+  DEFAULT_DURATION_MINUTES,
+  DEV_DURATION_MINUTES,
+  DURATION_PRESETS_MINUTES,
+} from '../src/data/durations.js'
 import { setLocale, t } from '../src/services/i18n.js'
 import * as session from '../src/services/useSession.js'
 
@@ -79,6 +84,59 @@ describe('main screen', () => {
     host.querySelector('.info__back').click()
     await nextTick()
     expect(host.textContent).toContain('A few quiet minutes, guided.')
+  })
+})
+
+// Present under `vite dev` and in tests; guarded by a compile-time false in a
+// production build, so it can never be reached by a user.
+describe('the developer duration', () => {
+  const devButton = () =>
+    [...host.querySelectorAll('button')].find((b) => b.textContent.trim().startsWith('Dev'))
+
+  afterEach(() => {
+    // Do not leave a one-breath session as the remembered preference.
+    session.selectDuration(DEFAULT_DURATION_MINUTES)
+  })
+
+  it('is offered alongside the presets, unselected, and selects on tap', async () => {
+    const dev = devButton()
+    expect(dev).toBeDefined()
+    expect(dev.getAttribute('aria-pressed')).toBe('false')
+
+    dev.click()
+    await nextTick()
+    expect(session.selectedDurationMinutes.value).toBe(DEV_DURATION_MINUTES)
+    expect(devButton().getAttribute('aria-pressed')).toBe('true')
+    // Still exactly one duration selected: it replaces the preset, not adds to it.
+    expect(host.querySelectorAll('[aria-pressed="true"]')).toHaveLength(2)
+  })
+
+  it('begins a session that completes after a single breath', async () => {
+    devButton().click()
+    await nextTick()
+    session.begin()
+    await nextTick()
+    expect(session.controller.value.endMs).toBe(session.controller.value.cycleMs)
+    expect(host.textContent).toContain('Breathe in')
+  })
+
+  // The completion screen is what the dev duration exists to reach, so it must
+  // not print "0.0166… minutes" when it gets there.
+  it('is named on the completion screen rather than shown as a fraction', () => {
+    const probe = document.createElement('div')
+    document.body.appendChild(probe)
+    const completion = createApp(CompletionMessage, {
+      profileId: 'beginner',
+      durationMinutes: DEV_DURATION_MINUTES,
+    })
+    completion.mount(probe)
+
+    expect(probe.textContent).toContain('1 breath (dev)')
+    expect(probe.textContent).not.toContain('0.0')
+    expect(probe.textContent).not.toContain('minute')
+
+    completion.unmount()
+    probe.remove()
   })
 })
 
