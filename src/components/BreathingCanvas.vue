@@ -44,11 +44,20 @@ onMounted(async () => {
   sketch = new p5((p) => {
     let width = 0
     let height = 0
+    let scale = 0
 
     const measure = () => {
       const rect = host.value.getBoundingClientRect()
       width = Math.max(1, Math.floor(rect.width))
       height = Math.max(1, Math.floor(rect.height))
+
+      // The guide is only a third of the window wide, but the bubble and the
+      // track are scaled off the session column that contains it, so
+      // narrowing the guide moves the bubble without shrinking it.
+      const column = host.value.parentElement?.parentElement
+      scale = column
+        ? Math.max(width, Math.floor(column.getBoundingClientRect().width))
+        : width
     }
 
     p.setup = () => {
@@ -59,13 +68,16 @@ onMounted(async () => {
 
     p.draw = () => {
       const snapshot = props.controller.snapshot()
-      const inset = Math.min(width, height) * 0.06
+      const reference = Math.min(scale, height)
+      const inset = reference * 0.06
       const trackTop = inset
       const trackBottom = height - inset
       const travel = trackBottom - trackTop
 
       // Bubble grows slightly toward the top: fuller lungs, gentler read.
-      const baseRadius = Math.min(width, height) * 0.085
+      // The second term only bites if the guide is narrower than the bubble.
+      const baseRadius = Math.min(reference * 0.085, width * 0.34)
+      const maxRadius = baseRadius * 1.15
       const radius = baseRadius * (0.85 + 0.3 * snapshot.position)
 
       // position 0 = bottom of the guide, 1 = top.
@@ -77,13 +89,13 @@ onMounted(async () => {
       // The path the bubble travels, so the extent of a breath is visible even
       // at the moment the bubble is stationary.
       p.fill(colors.border)
-      const trackWidth = Math.max(2, width * 0.006)
+      const trackWidth = Math.max(2, reference * 0.006)
       p.rect(x - trackWidth / 2, trackTop, trackWidth, travel, trackWidth)
 
       // End markers for the extremes of the breath.
       p.fill(colors.primary)
-      const capWidth = Math.min(width * 0.22, 120)
-      const capHeight = Math.max(2, width * 0.005)
+      const capWidth = Math.min(reference * 0.22, width * 0.8, 120)
+      const capHeight = Math.max(2, reference * 0.005)
       p.rect(x - capWidth / 2, trackTop - capHeight / 2, capWidth, capHeight, capHeight)
       p.rect(x - capWidth / 2, trackBottom - capHeight / 2, capWidth, capHeight, capHeight)
 
