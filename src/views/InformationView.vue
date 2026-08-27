@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { EXTERNAL_RESOURCES } from '../data/resources.js'
 import { t } from '../services/i18n.js'
+import { canInstall, promptInstall } from '../services/installPrompt.js'
 
 defineEmits(['back'])
 
@@ -22,6 +23,16 @@ const beginnerName = computed(() => t('profile.beginner.name'))
       </button>
       <h1 class="info__title">{{ t('info.title') }}</h1>
     </header>
+
+    <!-- Only where the browser has told us an install is actually possible.
+         Brave on Android offers no install UI of its own (TECH_SPECS §8.4). -->
+    <section v-if="canInstall" class="info__section install">
+      <h2 class="install__heading">{{ t('info.installHeading') }}</h2>
+      <p class="install__body">{{ t('info.installBody') }}</p>
+      <button type="button" class="install__button" @click="promptInstall">
+        {{ t('info.installAction') }}
+      </button>
+    </section>
 
     <section class="info__section">
       <h2 class="info__heading">{{ t('info.whatHeading') }}</h2>
@@ -104,6 +115,46 @@ const beginnerName = computed(() => t('profile.beginner.name'))
   font-size: 1.0625rem;
   color: var(--color-accent-soft);
   margin-bottom: var(--space-sm);
+}
+
+/* A card rather than prose: this is an offer to act, not something to read
+   alongside the rest of the page. */
+.install {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.install__heading {
+  font-size: 1.0625rem;
+  color: var(--color-accent-soft);
+}
+
+/* Qualified with `.info` to outrank the `.info p` rule below, which would
+   otherwise win on specificity and restore the full-strength body colour. */
+.info p.install__body {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.install__button {
+  min-height: var(--touch-min);
+  padding: 0 var(--space-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(180deg, var(--color-secondary), var(--color-primary));
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-pill);
+  transition: filter 200ms var(--ease-calm);
+}
+
+.install__button:active {
+  filter: brightness(1.15);
 }
 
 .info p {

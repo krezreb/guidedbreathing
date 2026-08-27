@@ -70,6 +70,10 @@ export default {
     ],
     resourcesHeading: 'En savoir plus',
     comingSoon: 'lien à venir',
+    installHeading: "Installer l'application",
+    installBody:
+      "Ajoutez-la à votre écran d'accueil : elle s'ouvre en plein écran, sans les commandes du navigateur, et fonctionne sans connexion.",
+    installAction: 'Installer',
   },
   resources: {
     'placeholder-breathing-basics': {

@@ -67,6 +67,10 @@ export default {
     ],
     resourcesHeading: 'Más información',
     comingSoon: 'enlace próximamente',
+    installHeading: 'Instalar la aplicación',
+    installBody:
+      'Añádela a tu pantalla de inicio: se abre a pantalla completa, sin los controles del navegador, y funciona sin conexión.',
+    installAction: 'Instalar',
   },
   resources: {
     'placeholder-breathing-basics': {

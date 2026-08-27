@@ -519,6 +519,26 @@ The application should remain functional in landscape, but the UI and animation 
 
 If technically and practically appropriate, the application may request portrait orientation when running as an installed PWA. This must not prevent normal browser usage on platforms that do not support orientation locking.
 
+## 8.4 Install Prompt
+
+Meeting the install criteria is not enough on its own: browsers differ in what they then offer the user, and on some the install path is effectively hidden.
+
+- Desktop Chromium shows an install icon in the address bar.
+- Chrome for Android shows a "mini-infobar".
+- **Brave for Android shows nothing.** Installation is available only through the browser's ⋮ menu, where the item reads "Install app" instead of "Add to Home screen" once the criteria are met. Brave also does not mint WebAPKs, so an install there is a home-screen shortcut that opens in Brave's shell rather than a standalone app. That part is a browser limitation and outside the application's control.
+
+The application must therefore offer its own install affordance:
+
+- Listen for the Chromium `beforeinstallprompt` event and retain it.
+- Call `preventDefault()` on it, so the app's own button replaces Chrome for Android's mini-infobar rather than duplicating it. This does not affect the desktop address-bar icon.
+- Offer a visible install button while, and only while, a retained event is available. A browser that never fires the event must never show the button.
+- Show the browser dialog on activation, and stop offering the button once the event is spent — the event cannot be reused, whatever the user chooses. Chromium fires a fresh one on a later visit if the app is still uninstalled.
+- Stop offering the button when the `appinstalled` event fires, which also covers installation through the browser's own UI.
+
+The affordance belongs on the information screen, not on the main or session screens: it must never compete with starting a session.
+
+Like the wake lock (§9), this is entirely best-effort. Browsers that do not implement `beforeinstallprompt` — currently Firefox and Safari — simply never show the button, and nothing else about the application changes.
+
 ---
 
 # 9. Screen Wake Lock
@@ -1198,6 +1218,7 @@ The implementation is considered complete when:
 ### PWA
 
 - [ ] The application is installable as a PWA.
+- [ ] The information screen offers an install button where the browser reports an install is possible, and no button where it does not.
 - [ ] The UI is optimized for mobile portrait use.
 - [ ] Touch targets are appropriate for phones.
 - [ ] Application assets are cached for offline use.

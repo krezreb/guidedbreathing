@@ -67,6 +67,10 @@ export default {
     ],
     resourcesHeading: 'Per saperne di più',
     comingSoon: 'link in arrivo',
+    installHeading: "Installa l'app",
+    installBody:
+      'Aggiungila alla schermata home: si apre a schermo intero, senza i controlli del browser, e funziona senza connessione.',
+    installAction: 'Installa',
   },
   resources: {
     'placeholder-breathing-basics': {

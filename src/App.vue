@@ -12,6 +12,7 @@ import HomeView from './views/HomeView.vue'
 import InformationView from './views/InformationView.vue'
 import LanguageView from './views/LanguageView.vue'
 import { initLocale } from './services/i18n.js'
+import { initInstallPrompt } from './services/installPrompt.js'
 import {
   cancelExit,
   confirmExit,
@@ -27,6 +28,7 @@ import {
 
 installLifecycleHandlers()
 initLocale()
+initInstallPrompt()
 
 const screen = computed(() => {
   if (isSessionActive.value) return 'session'

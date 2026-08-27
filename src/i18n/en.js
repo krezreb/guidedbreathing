@@ -75,6 +75,10 @@ export default {
     ],
     resourcesHeading: 'Learn more',
     comingSoon: 'link coming soon',
+    installHeading: 'Install this app',
+    installBody:
+      'Add it to your home screen: it opens full-screen, without browser controls, and works without a connection.',
+    installAction: 'Install',
   },
   resources: {
     'placeholder-breathing-basics': {

@@ -70,6 +70,10 @@ export default {
     ],
     resourcesHeading: 'Mehr erfahren',
     comingSoon: 'Link folgt',
+    installHeading: 'App installieren',
+    installBody:
+      'Leg sie auf deinem Startbildschirm ab: Sie öffnet sich im Vollbild, ohne Browserleiste, und funktioniert ohne Verbindung.',
+    installAction: 'Installieren',
   },
   resources: {
     'placeholder-breathing-basics': {

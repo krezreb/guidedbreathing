@@ -67,6 +67,10 @@ export default {
     ],
     resourcesHeading: 'Meer weten',
     comingSoon: 'link volgt',
+    installHeading: 'App installeren',
+    installBody:
+      'Zet hem op je beginscherm: hij opent schermvullend, zonder browserbalk, en werkt zonder verbinding.',
+    installAction: 'Installeren',
   },
   resources: {
     'placeholder-breathing-basics': {

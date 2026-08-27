@@ -520,6 +520,14 @@ The application should:
 - Cache application assets for offline use.
 - Allow the core breathing exercise to function without an internet connection once the application has been loaded or installed.
 
+## Offering the install
+
+Being installable is not the same as being *installed*, and some browsers make the install path very hard to find — Brave on Android offers no visible install UI at all.
+
+The application should therefore offer its own install button on the information screen, shown only where the browser has indicated that an install is genuinely possible. Where the browser gives no such indication, no button appears and nothing else changes.
+
+The button must never appear on the main or session screens: nothing may compete with starting a session.
+
 ---
 
 # 13. Mobile and Responsive Design
@@ -767,6 +775,9 @@ The application must adapt to desktop, tablet, and mobile screen sizes.
 
 ### FR-20 — PWA
 The application must be installable and usable as a PWA on supported browsers.
+
+### FR-20a — Install Prompt
+Where the browser indicates that installation is possible, the application must offer its own install button on the information screen. Where it does not, no button is shown.
 
 ### FR-21 — Offline Operation
 The core breathing functionality should remain usable without an active internet connection after the application has been initially loaded or installed.
