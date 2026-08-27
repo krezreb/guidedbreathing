@@ -10,6 +10,7 @@ import { createApp, nextTick } from 'vue'
 import App from '../src/App.vue'
 import { BREATHING_PROFILES } from '../src/data/breathingProfiles.js'
 import { DURATION_PRESETS_MINUTES } from '../src/data/durations.js'
+import { EXTERNAL_RESOURCES } from '../src/data/resources.js'
 import { setLocale, t } from '../src/services/i18n.js'
 import * as session from '../src/services/useSession.js'
 
@@ -72,13 +73,42 @@ describe('main screen', () => {
     info.click()
     await nextTick()
     expect(host.textContent).toContain('About breathing exercises')
-    // Placeholder resources are visibly unfinished rather than dead links.
-    expect(host.textContent).toContain('link coming soon')
-    expect(host.querySelectorAll('a[href]')).toHaveLength(0)
+
+    // Every resource is a real, reviewed link, opened safely in a new tab.
+    const links = [...host.querySelectorAll('.resource__link')]
+    expect(links).toHaveLength(EXTERNAL_RESOURCES.length)
+    for (const link of links) {
+      expect(link.getAttribute('href')).toMatch(/^https:\/\//)
+      expect(link.getAttribute('rel')).toBe('noopener noreferrer')
+      expect(link.textContent.trim().length).toBeGreaterThan(0)
+    }
+    // Nothing is left marked unfinished, and no entry renders as a dead link.
+    expect(host.textContent).not.toContain('link coming soon')
+    expect(host.querySelectorAll('.resource__placeholder')).toHaveLength(0)
 
     host.querySelector('.info__back').click()
     await nextTick()
     expect(host.textContent).toContain('A few quiet minutes, guided.')
+  })
+
+  it('says which resources are in another language, and only then', async () => {
+    const openInfo = async () => {
+      const info = [...host.querySelectorAll('button')].find((b) =>
+        b.textContent.includes(t('home.about')),
+      )
+      info.click()
+      await nextTick()
+    }
+
+    await openInfo()
+    // Reading English, the English resources need no warning.
+    expect(host.textContent).not.toContain('in English')
+
+    setLocale('fr', { persist: false })
+    await nextTick()
+    const badges = [...host.querySelectorAll('.resource__badge')]
+    expect(badges).toHaveLength(EXTERNAL_RESOURCES.length)
+    for (const badge of badges) expect(badge.textContent.trim()).toBe('en anglais')
   })
 })
 

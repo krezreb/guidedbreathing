@@ -69,20 +69,37 @@ export default {
       "Laissez la bulle donner le rythme au lieu d'essayer de la devancer.",
     ],
     resourcesHeading: 'En savoir plus',
+    resourcesIntro:
+      "Ces pages sont publiées par des organismes de santé et de psychologie, et non par cette application. Elles s'ouvrent dans votre navigateur.",
     comingSoon: 'lien à venir',
+    languageNote: {
+      en: 'en anglais',
+    },
   },
   resources: {
-    'placeholder-breathing-basics': {
-      title: 'Les bases des exercices de respiration',
-      note: 'Une introduction générale à la respiration rythmée.',
+    'nhs-breathing-exercises': {
+      title: 'Exercices de respiration contre le stress — NHS',
+      note: "Une introduction courte et concrète à la respiration lente : comment s'asseoir ou s'allonger, comment respirer vers le ventre et comment compter doucement.",
     },
-    'placeholder-relaxation-techniques': {
-      title: 'Techniques de relaxation',
-      note: 'Un contexte plus large sur les pratiques de relaxation.',
+    'apa-stress-management-tools': {
+      title: 'Outils de gestion du stress — American Psychological Association',
+      note: "Propose un exercice de respiration rythmée — quatre temps d'inspiration, quatre de pause, six d'expiration — présenté comme un moyen de réduire l'activation physique.",
     },
-    'placeholder-further-reading': {
-      title: 'Pour aller plus loin',
-      note: 'Des lectures de fond fiables.',
+    'ggsc-mindful-breathing': {
+      title: 'Respiration en pleine conscience — Greater Good, UC Berkeley',
+      note: "Pourquoi porter attention à sa respiration aide, expliqué pour tous par un centre qui vulgarise la recherche en psychologie, avec des références d'études publiées.",
+    },
+    'nccih-relaxation-techniques': {
+      title: 'Techniques de relaxation : ce qu’il faut savoir — NCCIH',
+      note: 'La place de la respiration parmi les autres techniques de relaxation, ce que les données montrent ou non — cela varie selon les troubles — et des précautions de bon sens.',
+    },
+    'apa-handling-stressors': {
+      title: 'Des façons saines de gérer le stress — American Psychological Association',
+      note: "La respiration comme une option parmi d'autres, aux côtés de la relaxation musculaire progressive, de la pleine conscience et des habitudes quotidiennes, plutôt que comme remède universel.",
+    },
+    'ala-breathing-exercises': {
+      title: 'Exercices de respiration — American Lung Association',
+      note: "Plus de détails sur la respiration abdominale et les expirations allongées. Une partie s'adresse aux personnes atteintes de maladies pulmonaires : à lire comme un complément, non comme des consignes de cette application.",
     },
   },
   language: {

@@ -1,9 +1,23 @@
 <script setup>
 import { computed } from 'vue'
 import { EXTERNAL_RESOURCES } from '../data/resources.js'
-import { t } from '../services/i18n.js'
+import { locale, t } from '../services/i18n.js'
 
 defineEmits(['back'])
+
+/**
+ * Every resource is an outside page in its own language. Say so when that is
+ * not the language the reader chose, so nobody follows a link expecting their
+ * own language. t() echoes the key when a catalogue lacks it, which would put
+ * a key on screen; a resource in a language we have no phrase for is left
+ * unlabelled instead.
+ */
+function languageNote(resource) {
+  if (!resource.lang || resource.lang === locale.value) return null
+  const key = `info.languageNote.${resource.lang}`
+  const note = t(key)
+  return note === key ? null : note
+}
 
 /**
  * Two passages name a breathing profile. Interpolating the translated name
@@ -45,6 +59,7 @@ const beginnerName = computed(() => t('profile.beginner.name'))
 
     <section class="info__section">
       <h2 class="info__heading">{{ t('info.resourcesHeading') }}</h2>
+      <p class="info__resources-intro">{{ t('info.resourcesIntro') }}</p>
       <ul class="info__resources">
         <li v-for="resource in EXTERNAL_RESOURCES" :key="resource.id" class="resource">
           <a
@@ -60,7 +75,12 @@ const beginnerName = computed(() => t('profile.beginner.name'))
             {{ t(`resources.${resource.id}.title`) }}
             <span class="resource__badge">{{ t('info.comingSoon') }}</span>
           </span>
-          <span class="resource__note">{{ t(`resources.${resource.id}.note`) }}</span>
+          <span class="resource__note">
+            {{ t(`resources.${resource.id}.note`) }}
+            <span v-if="languageNote(resource)" class="resource__badge">
+              {{ languageNote(resource) }}
+            </span>
+          </span>
         </li>
       </ul>
     </section>
@@ -138,11 +158,18 @@ const beginnerName = computed(() => t('profile.beginner.name'))
   border-top: 1px solid var(--color-border);
 }
 
+.info__resources-intro {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
 .resource__link {
   min-height: var(--touch-min);
   display: flex;
   align-items: center;
   font-weight: 600;
+  /* Titles name their publisher, so they are long enough to wrap on a phone. */
+  padding: var(--space-xs) 0;
 }
 
 .resource__placeholder {

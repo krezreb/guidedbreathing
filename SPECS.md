@@ -423,17 +423,28 @@ The application should avoid making medical claims or presenting breathing exerc
 
 External resources should open appropriately for the PWA environment without unnecessarily disrupting the application.
 
-## 10.1 External Links — Stubbed for V1
+## 10.1 External Links
 
-The specific external resources have not been chosen yet. For this version the
-links section is **stubbed**: the informational screen includes the section and
-its layout, populated with clearly marked placeholder entries.
+The informational screen ends with a short list of external resources, ordered
+from the most practical to the most background: what to do, why it works, where
+breathing sits among other techniques, then further reading.
 
-The link list must live in a single data structure so that real URLs can be
-dropped in later without touching the informational screen's markup.
+Only reviewed destinations published by health or psychology organisations are
+listed. Each entry names its publisher, so the reader can see whose page they
+are about to open, and a note says what the page covers. Where a page is aimed
+partly at people with a medical condition, the note frames it as background
+rather than as instructions this app endorses.
 
-Placeholders must be obviously unfinished rather than looking like working links
-— no invented URLs, and no external destination that has not been reviewed.
+The link list must live in a single data structure so that entries can be added,
+removed or reordered without touching the informational screen's markup.
+
+An entry may be queued before its destination is settled, in which case it
+renders as obviously unfinished rather than as a working link — no invented
+URLs, and no external destination that has not been reviewed.
+
+Resources are in their own language, which is recorded alongside each entry.
+When that is not the language the reader has chosen, the screen says so, so that
+nobody follows a link expecting their own language.
 
 ---
 

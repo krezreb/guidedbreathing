@@ -74,20 +74,40 @@ export default {
       'Let the bubble set the pace rather than trying to get ahead of it.',
     ],
     resourcesHeading: 'Learn more',
+    resourcesIntro:
+      'These pages are published by health and psychology organisations, not by this app. They open in your browser.',
     comingSoon: 'link coming soon',
+    // Keyed by the destination's language. The badge appears only when that is
+    // not the language the reader chose, so add a key here whenever a resource
+    // in a new language is added.
+    languageNote: {
+      en: 'in English',
+    },
   },
   resources: {
-    'placeholder-breathing-basics': {
-      title: 'Breathing exercise basics',
-      note: 'A general introduction to paced breathing.',
+    'nhs-breathing-exercises': {
+      title: 'Breathing exercises for stress — NHS',
+      note: 'A short, practical introduction to slow breathing: how to sit or lie, how to breathe into your belly, and how to count gently as you go.',
     },
-    'placeholder-relaxation-techniques': {
-      title: 'Relaxation techniques',
-      note: 'Wider context on relaxation practices.',
+    'apa-stress-management-tools': {
+      title: 'Stress management tools — American Psychological Association',
+      note: 'Includes a paced breathing exercise — in for four, hold for four, out for six — and explains it as a way of lowering physical arousal.',
     },
-    'placeholder-further-reading': {
-      title: 'Further reading',
-      note: 'Reputable background reading.',
+    'ggsc-mindful-breathing': {
+      title: 'Mindful Breathing — Greater Good, UC Berkeley',
+      note: 'Why paying attention to your breathing helps, written for a general reader by a centre that translates psychology research, with references to published studies.',
+    },
+    'nccih-relaxation-techniques': {
+      title: 'Relaxation Techniques: What You Need To Know — NCCIH',
+      note: 'Where breathing sits among other relaxation techniques, what the evidence does and does not show — it varies by condition — and sensible safety notes.',
+    },
+    'apa-handling-stressors': {
+      title: "Healthy ways to handle life's stressors — American Psychological Association",
+      note: 'Breathing as one option among several, alongside progressive muscle relaxation, mindfulness and everyday habits, rather than as a cure-all.',
+    },
+    'ala-breathing-exercises': {
+      title: 'Breathing Exercises — American Lung Association',
+      note: 'More detail on belly breathing and longer exhalations. Parts of it are written for people with lung conditions, so read it as background rather than as instructions from this app.',
     },
   },
   language: {

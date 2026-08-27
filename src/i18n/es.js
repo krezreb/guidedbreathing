@@ -66,20 +66,37 @@ export default {
       'Deja que la burbuja marque el ritmo en lugar de intentar adelantarte.',
     ],
     resourcesHeading: 'Más información',
+    resourcesIntro:
+      'Estas páginas las publican organizaciones de salud y de psicología, no esta aplicación. Se abren en tu navegador.',
     comingSoon: 'enlace próximamente',
+    languageNote: {
+      en: 'en inglés',
+    },
   },
   resources: {
-    'placeholder-breathing-basics': {
-      title: 'Fundamentos de los ejercicios de respiración',
-      note: 'Una introducción general a la respiración pausada.',
+    'nhs-breathing-exercises': {
+      title: 'Ejercicios de respiración para el estrés — NHS',
+      note: 'Una introducción breve y práctica a la respiración lenta: cómo sentarse o tumbarse, cómo respirar hacia el vientre y cómo contar con calma.',
     },
-    'placeholder-relaxation-techniques': {
-      title: 'Técnicas de relajación',
-      note: 'Contexto más amplio sobre las prácticas de relajación.',
+    'apa-stress-management-tools': {
+      title: 'Herramientas para manejar el estrés — American Psychological Association',
+      note: 'Incluye un ejercicio de respiración pausada — cuatro al inspirar, cuatro de pausa, seis al espirar — y lo explica como una forma de reducir la activación física.',
     },
-    'placeholder-further-reading': {
-      title: 'Lecturas adicionales',
-      note: 'Lecturas de fondo fiables.',
+    'ggsc-mindful-breathing': {
+      title: 'Respiración consciente — Greater Good, UC Berkeley',
+      note: 'Por qué ayuda prestar atención a la respiración, explicado para cualquier lector por un centro que divulga la investigación en psicología, con referencias a estudios publicados.',
+    },
+    'nccih-relaxation-techniques': {
+      title: 'Técnicas de relajación: lo que conviene saber — NCCIH',
+      note: 'El lugar de la respiración entre otras técnicas de relajación, qué muestra y qué no muestra la evidencia — varía según la afección — y advertencias de seguridad razonables.',
+    },
+    'apa-handling-stressors': {
+      title: 'Formas saludables de afrontar el estrés — American Psychological Association',
+      note: 'La respiración como una opción entre varias, junto con la relajación muscular progresiva, la atención plena y los hábitos cotidianos, y no como un remedio universal.',
+    },
+    'ala-breathing-exercises': {
+      title: 'Ejercicios de respiración — American Lung Association',
+      note: 'Más detalle sobre la respiración abdominal y las espiraciones largas. Parte del texto se dirige a personas con enfermedades pulmonares: léelo como contexto, no como instrucciones de esta aplicación.',
     },
   },
   language: {

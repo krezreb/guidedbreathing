@@ -66,20 +66,37 @@ export default {
       'Laat de bel het tempo bepalen in plaats van erop vooruit te lopen.',
     ],
     resourcesHeading: 'Meer weten',
+    resourcesIntro:
+      'Deze pagina’s worden uitgegeven door gezondheids- en psychologieorganisaties, niet door deze app. Ze openen in je browser.',
     comingSoon: 'link volgt',
+    languageNote: {
+      en: 'in het Engels',
+    },
   },
   resources: {
-    'placeholder-breathing-basics': {
-      title: 'De basis van ademhalingsoefeningen',
-      note: 'Een algemene inleiding op ritmisch ademen.',
+    'nhs-breathing-exercises': {
+      title: 'Ademhalingsoefeningen bij stress — NHS',
+      note: 'Een korte, praktische inleiding op langzaam ademen: hoe je zit of ligt, hoe je naar je buik ademt en hoe je rustig meetelt.',
     },
-    'placeholder-relaxation-techniques': {
-      title: 'Ontspanningstechnieken',
-      note: 'Bredere context over ontspanningsmethoden.',
+    'apa-stress-management-tools': {
+      title: 'Hulpmiddelen bij stress — American Psychological Association',
+      note: 'Met een oefening in ritmisch ademen — vier in, vier vasthouden, zes uit — uitgelegd als manier om de lichamelijke spanning te verlagen.',
     },
-    'placeholder-further-reading': {
-      title: 'Verder lezen',
-      note: 'Betrouwbare achtergrondinformatie.',
+    'ggsc-mindful-breathing': {
+      title: 'Aandachtig ademen — Greater Good, UC Berkeley',
+      note: 'Waarom aandacht voor je ademhaling helpt, begrijpelijk uitgelegd door een centrum dat psychologisch onderzoek toegankelijk maakt, met verwijzingen naar gepubliceerde studies.',
+    },
+    'nccih-relaxation-techniques': {
+      title: 'Ontspanningstechnieken: wat je moet weten — NCCIH',
+      note: 'Waar ademhaling staat tussen andere ontspanningstechnieken, wat het bewijs wel en niet aantoont — dat verschilt per aandoening — en verstandige veiligheidsopmerkingen.',
+    },
+    'apa-handling-stressors': {
+      title: 'Gezonde manieren om met stress om te gaan — American Psychological Association',
+      note: 'Ademhaling als één van meerdere mogelijkheden, naast progressieve spierrelaxatie, mindfulness en dagelijkse gewoonten, en niet als wondermiddel.',
+    },
+    'ala-breathing-exercises': {
+      title: 'Ademhalingsoefeningen — American Lung Association',
+      note: 'Meer over buikademhaling en langer uitademen. Een deel is bedoeld voor mensen met longaandoeningen: lees het als achtergrond, niet als instructies van deze app.',
     },
   },
   language: {

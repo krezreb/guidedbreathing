@@ -66,20 +66,37 @@ export default {
       'Lascia che sia la bolla a dare il ritmo, invece di cercare di anticiparla.',
     ],
     resourcesHeading: 'Per saperne di più',
+    resourcesIntro:
+      'Queste pagine sono pubblicate da organizzazioni sanitarie e di psicologia, non da questa app. Si aprono nel tuo browser.',
     comingSoon: 'link in arrivo',
+    languageNote: {
+      en: 'in inglese',
+    },
   },
   resources: {
-    'placeholder-breathing-basics': {
-      title: 'Le basi degli esercizi di respirazione',
-      note: "Un'introduzione generale alla respirazione ritmata.",
+    'nhs-breathing-exercises': {
+      title: 'Esercizi di respirazione per lo stress — NHS',
+      note: "Un'introduzione breve e concreta alla respirazione lenta: come sederti o sdraiarti, come respirare verso la pancia e come contare con calma.",
     },
-    'placeholder-relaxation-techniques': {
-      title: 'Tecniche di relax',
-      note: 'Un contesto più ampio sulle pratiche di rilassamento.',
+    'apa-stress-management-tools': {
+      title: 'Strumenti per gestire lo stress — American Psychological Association',
+      note: 'Comprende un esercizio di respirazione ritmata — quattro inspirando, quattro di pausa, sei espirando — spiegato come modo per abbassare l’attivazione fisica.',
     },
-    'placeholder-further-reading': {
-      title: 'Approfondimenti',
-      note: 'Letture di approfondimento affidabili.',
+    'ggsc-mindful-breathing': {
+      title: 'Respirazione consapevole — Greater Good, UC Berkeley',
+      note: 'Perché prestare attenzione al respiro aiuta, spiegato per tutti da un centro che divulga la ricerca psicologica, con riferimenti a studi pubblicati.',
+    },
+    'nccih-relaxation-techniques': {
+      title: 'Tecniche di rilassamento: quello che serve sapere — NCCIH',
+      note: 'Dove si colloca la respirazione tra le altre tecniche di rilassamento, cosa mostrano e cosa non mostrano le prove — variano a seconda del disturbo — e avvertenze di buon senso.',
+    },
+    'apa-handling-stressors': {
+      title: 'Modi sani di affrontare lo stress — American Psychological Association',
+      note: 'La respirazione come una possibilità tra tante, accanto al rilassamento muscolare progressivo, alla mindfulness e alle abitudini quotidiane, e non come rimedio universale.',
+    },
+    'ala-breathing-exercises': {
+      title: 'Esercizi di respirazione — American Lung Association',
+      note: 'Più dettagli sulla respirazione diaframmatica e sulle espirazioni lunghe. Una parte è rivolta a chi ha malattie polmonari: leggila come contesto, non come istruzioni di questa app.',
     },
   },
   language: {

@@ -69,20 +69,37 @@ export default {
       'Lass die Blase das Tempo vorgeben, statt ihr vorauszueilen.',
     ],
     resourcesHeading: 'Mehr erfahren',
+    resourcesIntro:
+      'Diese Seiten werden von Gesundheits- und Psychologieorganisationen veröffentlicht, nicht von dieser App. Sie öffnen sich in Ihrem Browser.',
     comingSoon: 'Link folgt',
+    languageNote: {
+      en: 'auf Englisch',
+    },
   },
   resources: {
-    'placeholder-breathing-basics': {
-      title: 'Grundlagen der Atemübungen',
-      note: 'Eine allgemeine Einführung in das rhythmische Atmen.',
+    'nhs-breathing-exercises': {
+      title: 'Atemübungen bei Stress — NHS',
+      note: 'Eine kurze, praktische Einführung in langsames Atmen: wie Sie sitzen oder liegen, wie Sie in den Bauch atmen und wie Sie ruhig mitzählen.',
     },
-    'placeholder-relaxation-techniques': {
-      title: 'Entspannungstechniken',
-      note: 'Breiterer Kontext zu Entspannungsverfahren.',
+    'apa-stress-management-tools': {
+      title: 'Werkzeuge zur Stressbewältigung — American Psychological Association',
+      note: 'Enthält eine Übung zum rhythmischen Atmen — vier ein, vier halten, sechs aus — und erklärt sie als Weg, die körperliche Erregung zu senken.',
     },
-    'placeholder-further-reading': {
-      title: 'Weiterführende Literatur',
-      note: 'Seriöse Hintergrundlektüre.',
+    'ggsc-mindful-breathing': {
+      title: 'Achtsames Atmen — Greater Good, UC Berkeley',
+      note: 'Warum es hilft, auf den eigenen Atem zu achten — allgemein verständlich von einem Zentrum, das psychologische Forschung aufbereitet, mit Verweisen auf veröffentlichte Studien.',
+    },
+    'nccih-relaxation-techniques': {
+      title: 'Entspannungstechniken: Was Sie wissen sollten — NCCIH',
+      note: 'Wo Atmen unter den anderen Entspannungstechniken steht, was die Evidenz zeigt und was nicht — das unterscheidet sich je nach Beschwerdebild — und vernünftige Sicherheitshinweise.',
+    },
+    'apa-handling-stressors': {
+      title: 'Gesunde Wege, mit Stress umzugehen — American Psychological Association',
+      note: 'Atmen als eine Möglichkeit unter mehreren, neben progressiver Muskelentspannung, Achtsamkeit und Alltagsgewohnheiten — und nicht als Allheilmittel.',
+    },
+    'ala-breathing-exercises': {
+      title: 'Atemübungen — American Lung Association',
+      note: 'Mehr Details zur Bauchatmung und zu längerem Ausatmen. Teile richten sich an Menschen mit Lungenerkrankungen: als Hintergrund zu lesen, nicht als Anleitung dieser App.',
     },
   },
   language: {
