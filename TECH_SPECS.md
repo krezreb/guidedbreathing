@@ -112,6 +112,66 @@ src/
 
 The exact structure may be adjusted during implementation, but application logic should remain separated from presentation and animation code.
 
+## 3.2 Internationalisation
+
+The interface ships in six languages (product specification §11). Two rules
+follow from that, and everything else is detail:
+
+1. **No user-visible string may live outside a message catalogue** — not in
+   components, not in services, not in the data modules. `breathingProfiles.js`
+   holds timings and ids; the profile names and descriptions live under
+   `profile.<id>` in each catalogue. `resources.js` holds ids and urls; the
+   titles and notes live under `resources.<id>`.
+2. **English is the source and the fallback.** A key missing from a translation
+   resolves to English rather than rendering blank.
+
+```text
+src/
+├── i18n/
+│   ├── index.js        locale registry: catalogues + the picker list
+│   ├── en.js           the source catalogue
+│   └── de|es|fr|it|nl.js
+└── services/
+    └── i18n.js         locale state, lookup, interpolation, plurals
+```
+
+### No i18n library
+
+The application needs key lookup, `{name}` interpolation and a two-form plural.
+That is about forty lines, so it is written directly rather than adding a
+dependency, consistent with §25.
+
+Reactivity needs no plugin either: `t()` reads a `locale` ref, so any component
+that calls it while rendering re-renders when the language changes. Switching
+language updates every open screen with no reload and no event plumbing.
+
+### Plurals
+
+Counted strings use a `{ one, other }` pair. All six supported languages share
+the same rule for the values this application counts (1–20 minutes), so
+`count === 1` selects the singular. A language with a different rule would
+require extending `tp()`, never its callers.
+
+### Catalogue integrity
+
+Missing or misshapen translations are a silent failure mode: the interface
+renders, but with gaps. The test suite therefore compares every catalogue
+against the English one for identical key paths *and* identical value shapes,
+and renders every parameterised string in every language to confirm no
+placeholder is left unfilled.
+
+### Document language
+
+`document.documentElement.lang` must track the selected language. Assistive
+technology chooses a voice from it, and hyphenation depends on it. The document
+title follows the same way.
+
+### Bundling
+
+All six catalogues are bundled into the main chunk — together about 7 kB
+gzipped. Loading them eagerly keeps every language available offline and
+immediately, which is worth more than the transfer saved by splitting them.
+
 ---
 
 # 4. p5.js Animation
@@ -278,6 +338,28 @@ Equivalently: once `elapsed() >= sessionDurationMs`, wait until
 therefore always ends on a completed exhale and overflows by less than one
 breathing cycle.
 
+### The one-breath development duration
+
+A corollary of the rule above: **any** duration shorter than one cycle ends
+after exactly one complete inhale/exhale, whatever the profile. The development
+duration (product specification §3) is defined as one second and needs no
+special case in the controller — it is an ordinary session that happens to be
+shorter than every cycle.
+
+It is offered only behind the `devduration` feature flag (§15.1). Two separate
+questions are kept apart:
+
+- **Is this number the dev duration?** A pure predicate on the value, used by
+  the completion screen to label it rather than render "0.0166… minutes".
+- **May it be selected?** Flag-dependent. `isValidDuration` rejects it when the
+  flag is off, so a duration persisted during a flagged visit is discarded on an
+  ordinary one — `durationOrDefault` falls back to the 5-minute default rather
+  than silently starting a one-breath session.
+
+The selector button and the completion label are deliberately untranslated: the
+message catalogues hold copy that ships to users, and nobody reaches either
+without putting the flag in the URL themselves.
+
 ## 5.3 Timer Display
 
 The remaining time is `sessionDurationMs - elapsed()`, clamped at zero and
@@ -359,7 +441,14 @@ At minimum, the application should persist:
 
 - Last selected breathing profile.
 - Last selected session duration.
+- The explicitly chosen interface language, if any (§3.2). A language that was
+  merely detected from the browser is not written back, so the application keeps
+  following the device until the user chooses.
 - Any user-configurable application preferences introduced later.
+
+Preferences share a single storage key and have more than one writer — the main
+screen writes the profile and duration, the language screen writes the locale.
+Writes must therefore **merge** into the stored object rather than replace it.
 
 Suggested storage namespace:
 
@@ -653,6 +742,42 @@ make dev
 ```
 
 The development server should bind appropriately for local development and, where useful, allow access from another device on the local network for testing the mobile UI.
+
+## 15.1 Feature Flags
+
+Development affordances are exposed as **runtime feature flags read from the URL
+query string**, not as `import.meta.env.DEV` branches:
+
+```text
+http://localhost:5173/?devduration=1
+```
+
+A flag is off unless the URL asks for it. `?flag`, `?flag=1`, `=true`, `=yes`
+and `=on` enable it; anything else, `=0` included, leaves it off.
+
+Runtime rather than build-time is the point. One bundle behaves both ways, so a
+flagged affordance can be exercised against the real production build — over
+the Docker image, or a deployed S3 copy — instead of only under `vite dev`,
+where the code being tested is not the code being shipped.
+
+The trade is that a flag is reachable by anyone who edits the URL. Only
+affordances that are harmless in a stranger's hands belong behind one. Anything
+that must be genuinely unavailable in production needs a build-time guard
+instead, not a flag.
+
+Flags are read from `location.search` on each check rather than cached at import.
+A cache would have to be primed before any other module's top-level code ran —
+`useSession.js` sanitises the stored duration as it loads — and priming it would
+need a test-only seam.
+
+`make dev` turns the dev-duration flag on by default (§14); every other target
+serves the flag-free application.
+
+### Defined flags
+
+| Flag | Effect |
+|---|---|
+| `devduration` | Offers the one-breath duration (§5.2, product specification §3). |
 
 ---
 
@@ -952,6 +1077,8 @@ No UI framework is required unless it provides a clear benefit.
 
 `vue-router` must **not** be added — see §3.1.
 
+No internationalisation library is required either — see §3.2.
+
 A unit test runner (Vitest, as the natural fit for Vite) is required as a
 development dependency; see §28.
 
@@ -1007,6 +1134,12 @@ The implementation is considered complete when:
 - [ ] Session completion triggers a sound.
 - [ ] Session completion displays a congratulatory message.
 - [ ] The information section is available.
+- [ ] The interface is available in English, Dutch, French, German, Italian and Spanish.
+- [ ] A language can be chosen from the main screen and applies immediately everywhere.
+- [ ] The chosen language is persisted, and survives alongside the other preferences.
+- [ ] The browser's language is used on first open when it is supported.
+- [ ] Every catalogue is complete, and no rendered string is left with an unfilled placeholder.
+- [ ] No user-visible string remains outside the message catalogues.
 
 ### Persistence
 
@@ -1075,6 +1208,13 @@ At minimum:
 - Remaining-time formatting, including the `0:00` clamp during overflow.
 - Automatic pause on document hidden, and no auto-resume on visible (§6.1).
 - Exit from `RUNNING` and from `PAUSED` never reaches `COMPLETED` (FR-14).
+- Catalogue parity: every translation has the same key paths and value shapes as
+  English, and no extra keys (§3.2).
+- Every parameterised string, rendered in every language, contains no unfilled
+  `{placeholder}`.
+- Switching language re-renders the main screen, the session screen and the exit
+  dialog without a reload.
+- Locale detection from regional browser tags, and the English fallback.
 
 ## 28.3 Non-goals
 

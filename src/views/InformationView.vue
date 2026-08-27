@@ -1,52 +1,50 @@
 <script setup>
+import { computed } from 'vue'
 import { EXTERNAL_RESOURCES } from '../data/resources.js'
+import { t } from '../services/i18n.js'
 
 defineEmits(['back'])
+
+/**
+ * Two passages name a breathing profile. Interpolating the translated name
+ * keeps the prose correct in every language without embedding markup in the
+ * catalogues.
+ */
+const chillName = computed(() => t('profile.chill.name'))
+const beginnerName = computed(() => t('profile.beginner.name'))
 </script>
 
 <template>
   <main class="info">
     <header class="info__header">
-      <button type="button" class="info__back" @click="$emit('back')">&larr; Back</button>
-      <h1 class="info__title">About breathing exercises</h1>
+      <button type="button" class="info__back" @click="$emit('back')">
+        &larr; {{ t('info.back') }}
+      </button>
+      <h1 class="info__title">{{ t('info.title') }}</h1>
     </header>
 
     <section class="info__section">
-      <h2 class="info__heading">What this is</h2>
-      <p>
-        Guided breathing simply means following a steady, deliberate rhythm of breathing in and
-        breathing out. This app shows you that rhythm: a bubble rises while you breathe in and
-        falls while you breathe out, so you can follow along without counting.
-      </p>
+      <h2 class="info__heading">{{ t('info.whatHeading') }}</h2>
+      <p>{{ t('info.whatBody') }}</p>
     </section>
 
     <section class="info__section">
-      <h2 class="info__heading">Why people do it</h2>
-      <p>
-        Many people find that slow, paced breathing feels calming and helps them settle before
-        sleep, between tasks, or after something stressful. Longer exhalations, as in the
-        <em>Chill</em> profile, are a common choice for winding down.
-      </p>
-      <p class="info__caveat">
-        This app is for relaxation only. It is not medical advice and is not a treatment for any
-        condition. If you have concerns about your breathing or your health, speak to a qualified
-        healthcare professional.
-      </p>
+      <h2 class="info__heading">{{ t('info.whyHeading') }}</h2>
+      <p>{{ t('info.whyBody', { profile: chillName }) }}</p>
+      <p class="info__caveat">{{ t('info.caveat') }}</p>
     </section>
 
     <section class="info__section">
-      <h2 class="info__heading">Getting the most from a session</h2>
+      <h2 class="info__heading">{{ t('info.tipsHeading') }}</h2>
       <ul class="info__list">
-        <li>Sit or lie somewhere comfortable where you will not be interrupted.</li>
-        <li>Breathe through your nose if that feels natural, into your belly rather than your chest.</li>
-        <li>Start with the <em>Beginner</em> profile and a short session; longer is not better.</li>
-        <li>Do not strain. If a pace feels uncomfortable, switch to a gentler profile.</li>
-        <li>Let the bubble set the pace rather than trying to get ahead of it.</li>
+        <li v-for="(tip, index) in t('info.tips', { profile: beginnerName })" :key="index">
+          {{ tip }}
+        </li>
       </ul>
     </section>
 
     <section class="info__section">
-      <h2 class="info__heading">Learn more</h2>
+      <h2 class="info__heading">{{ t('info.resourcesHeading') }}</h2>
       <ul class="info__resources">
         <li v-for="resource in EXTERNAL_RESOURCES" :key="resource.id" class="resource">
           <a
@@ -56,13 +54,13 @@ defineEmits(['back'])
             target="_blank"
             rel="noopener noreferrer"
           >
-            {{ resource.title }}
+            {{ t(`resources.${resource.id}.title`) }}
           </a>
           <span v-else class="resource__placeholder">
-            {{ resource.title }}
-            <span class="resource__badge">link coming soon</span>
+            {{ t(`resources.${resource.id}.title`) }}
+            <span class="resource__badge">{{ t('info.comingSoon') }}</span>
           </span>
-          <span class="resource__note">{{ resource.note }}</span>
+          <span class="resource__note">{{ t(`resources.${resource.id}.note`) }}</span>
         </li>
       </ul>
     </section>

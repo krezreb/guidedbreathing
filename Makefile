@@ -11,6 +11,13 @@ TAG         ?= latest
 PORT        ?= 8080
 DEV_PORT    ?= 5173
 
+# Feature flags appended to the development URL (SPECS §3, TECH_SPECS §15.1).
+# The one-breath dev duration is on by default here because the development
+# server is exactly where it is wanted; `make dev DEV_QUERY=` opens a clean URL.
+# Nothing is baked into the build: `preview`, `docker-run` and `deploy` serve
+# the flag-free app, and the flag can still be added by hand to any URL.
+DEV_QUERY   ?= ?devduration=1
+
 # Deployment. Supplied through the environment or the standard AWS CLI
 # credential mechanism — never hard-coded here (TECH_SPECS §18, §23).
 AWS_PROFILE ?=
@@ -46,8 +53,10 @@ node_modules: package.json
 	npm install
 	@touch node_modules
 
-dev: node_modules ## Start the local development server (accessible on the LAN)
-	npm run dev -- --host --port $(DEV_PORT)
+dev: node_modules ## Start the development server (LAN-accessible, dev flags on)
+	@echo "==> http://localhost:$(DEV_PORT)/$(DEV_QUERY)"
+	@echo "    (open the same query string on a phone against this machine's LAN address)"
+	npm run dev -- --host --port $(DEV_PORT) --open "/$(DEV_QUERY)"
 
 build: node_modules ## Create the optimised production build in dist/
 	npm run build

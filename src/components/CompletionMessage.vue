@@ -1,21 +1,40 @@
 <script setup>
-defineProps({
-  profileName: { type: String, required: true },
+import { computed } from 'vue'
+import { isDevDuration } from '../data/durations.js'
+import { t, tp } from '../services/i18n.js'
+
+const props = defineProps({
+  profileId: { type: String, required: true },
   durationMinutes: { type: Number, required: true },
 })
 defineEmits(['done'])
+
+/**
+ * The dev duration is a fraction of a minute, which `duration.long` would
+ * render as "0.0166… minutes" — on the very screen that duration exists to
+ * test. Label it for what it is instead. Untranslated, like the button that
+ * selects it: the only way to reach this branch is to have asked for the
+ * duration by URL flag.
+ */
+const durationLabel = computed(() =>
+  isDevDuration(props.durationMinutes)
+    ? '1 breath (dev)'
+    : tp('duration.long', props.durationMinutes, { minutes: props.durationMinutes }),
+)
 </script>
 
 <template>
   <section class="completion" aria-labelledby="completion-heading">
     <div class="completion__mark" aria-hidden="true"></div>
-    <h1 id="completion-heading" class="completion__title">Well done!</h1>
-    <p class="completion__body">You've completed your breathing session.</p>
+    <h1 id="completion-heading" class="completion__title">{{ t('completion.title') }}</h1>
+    <p class="completion__body">{{ t('completion.body') }}</p>
     <p class="completion__detail">
-      {{ profileName }} &middot; {{ durationMinutes }}
-      {{ durationMinutes === 1 ? 'minute' : 'minutes' }}
+      {{ t(`profile.${profileId}.name`) }} &middot;
+      {{ durationLabel }}
     </p>
-    <button type="button" class="completion__action" @click="$emit('done')">Back to start</button>
+    <button type="button" class="completion__action" @click="$emit('done')">
+      {{ t('completion.action') }}
+    </button>
   </section>
 </template>
 

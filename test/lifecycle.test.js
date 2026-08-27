@@ -66,17 +66,30 @@ describe('automatic pause on hidden document', () => {
 describe('exit confirmation', () => {
   beforeEach(() => {
     if (session.isSessionActive.value) session.confirmExit()
+    // The app is on screen here; an earlier test may have left it hidden.
+    hide(false)
   })
 
   it('asks before discarding, and cancelling keeps the session', () => {
     session.begin()
     session.requestExit()
     expect(session.exitConfirmVisible.value).toBe(true)
-    expect(session.sessionState.value).toBe(SESSION_STATE.RUNNING)
+    // The guide holds still while the dialog is up: nothing to follow behind it.
+    expect(session.sessionState.value).toBe(SESSION_STATE.PAUSED)
 
     session.cancelExit()
     expect(session.exitConfirmVisible.value).toBe(false)
     expect(session.sessionState.value).toBe(SESSION_STATE.RUNNING)
+  })
+
+  it('leaves an already-paused session paused when the dialog is cancelled', () => {
+    session.begin()
+    session.pause()
+    session.requestExit()
+    expect(session.sessionState.value).toBe(SESSION_STATE.PAUSED)
+
+    session.cancelExit()
+    expect(session.sessionState.value).toBe(SESSION_STATE.PAUSED)
   })
 
   it('returns to IDLE on confirm, never to COMPLETED', () => {
@@ -102,7 +115,8 @@ describe('preferences', () => {
     expect(session.selectedDurationMinutes.value).toBe(15)
 
     const stored = JSON.parse(window.localStorage.getItem('guided-breathing.preferences'))
-    expect(stored).toEqual({ profileId: 'chill', durationMinutes: 15 })
+    // toMatchObject, not toEqual: the language picker shares this key.
+    expect(stored).toMatchObject({ profileId: 'chill', durationMinutes: 15 })
   })
 
   it('ignores values that are not valid presets', () => {

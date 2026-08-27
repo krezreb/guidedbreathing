@@ -1,38 +1,17 @@
 /**
  * The four breathing profiles (SPECS §2).
  *
- * Adding a profile means adding an entry here and nothing else — no UI code
- * knows the list's length or contents.
+ * Timings only — the name and description of each profile live in the message
+ * catalogues under `profile.<id>`, so this module holds no user-visible text.
+ *
+ * Adding a profile means adding an entry here plus its strings in every
+ * catalogue; no UI code knows the list's length or contents.
  */
 export const BREATHING_PROFILES = [
-  {
-    id: 'strengthen',
-    name: 'Strengthen',
-    inhaleSeconds: 6,
-    exhaleSeconds: 6,
-    description: 'Equal-duration breathing',
-  },
-  {
-    id: 'chill',
-    name: 'Chill',
-    inhaleSeconds: 4,
-    exhaleSeconds: 8,
-    description: 'Longer exhalation',
-  },
-  {
-    id: 'balance',
-    name: 'Balance',
-    inhaleSeconds: 5,
-    exhaleSeconds: 5,
-    description: 'Balanced breathing',
-  },
-  {
-    id: 'beginner',
-    name: 'Beginner',
-    inhaleSeconds: 3,
-    exhaleSeconds: 5,
-    description: 'Shorter cycle for beginners',
-  },
+  { id: 'strengthen', inhaleSeconds: 6, exhaleSeconds: 6 },
+  { id: 'chill', inhaleSeconds: 4, exhaleSeconds: 8 },
+  { id: 'balance', inhaleSeconds: 5, exhaleSeconds: 5 },
+  { id: 'beginner', inhaleSeconds: 3, exhaleSeconds: 5 },
 ]
 
 export const DEFAULT_PROFILE_ID = 'beginner'
