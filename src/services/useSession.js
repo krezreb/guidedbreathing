@@ -251,10 +251,7 @@ export function returnHome() {
 
 function teardown() {
   resumeAfterExitCancel = false
-<<<<<<< HEAD
-=======
   cuedPhase = null
->>>>>>> worktree-phase-sounds
   stopLoop()
   wakeLock.release()
   releaseHistoryEntry()

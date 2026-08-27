@@ -43,7 +43,13 @@ export default defineConfig({
         navigateFallback: 'index.html',
       },
       devOptions: {
-        enabled: false,
+        // Enabled so the dev server serves a real manifest and service worker.
+        // Without these Chromium (Brave/Edge/Chrome) has nothing to install and
+        // offers no install prompt at all on http://localhost (TECH_SPECS §15).
+        enabled: true,
+        // The dev worker is emitted as an ES module, unlike the bundled build.
+        type: 'module',
+        navigateFallback: 'index.html',
       },
     }),
   ],
