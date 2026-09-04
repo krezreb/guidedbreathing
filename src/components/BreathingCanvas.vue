@@ -26,8 +26,6 @@ function palette() {
   const styles = getComputedStyle(document.documentElement)
   const read = (name) => styles.getPropertyValue(name).trim()
   return {
-    surface: read('--color-surface'),
-    border: read('--color-border'),
     accent: read('--color-accent'),
     accentSoft: read('--color-accent-soft'),
     primary: read('--color-primary'),
@@ -73,12 +71,6 @@ onMounted(async () => {
       const x = width / 2
 
       p.clear()
-
-      // The path the bubble travels, so the extent of a breath is visible even
-      // at the moment the bubble is stationary.
-      p.fill(colors.border)
-      const trackWidth = Math.max(2, width * 0.006)
-      p.rect(x - trackWidth / 2, trackTop, trackWidth, travel, trackWidth)
 
       // End markers for the extremes of the breath.
       p.fill(colors.primary)
