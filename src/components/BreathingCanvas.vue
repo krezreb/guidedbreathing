@@ -11,7 +11,6 @@
  * otherwise.
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { PHASE } from '../services/sessionController.js'
 
 const props = defineProps({
   controller: { type: Object, required: true },
@@ -79,8 +78,9 @@ onMounted(async () => {
 
       p.clear()
 
-      // Soft halo, brighter while inhaling.
-      const haloStrength = snapshot.phase === PHASE.INHALE ? 26 : 18
+      // Soft halo. Constant strength: the bubble sits on top of it, so any
+      // phase-dependent alpha reads as the bubble changing colour.
+      const haloStrength = 22
       for (let ring = HALO_RINGS; ring >= 1; ring -= 1) {
         const halo = p.color(colors.accent)
         halo.setAlpha(haloStrength / ring)
