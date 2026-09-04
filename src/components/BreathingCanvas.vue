@@ -11,10 +11,15 @@
  * otherwise.
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { makeParticles, stepParticles } from '../services/particles.js'
 
 const props = defineProps({
   controller: { type: Object, required: true },
 })
+
+/** How many particles drift behind the bubble. Enough to read as a field,
+ *  few enough to stay subtle on a small screen. */
+const PARTICLE_COUNT = 28
 
 /** Halo geometry, shared by the draw loop and the track inset. */
 const HALO_RINGS = 4
@@ -44,6 +49,7 @@ onMounted(async () => {
   sketch = new p5((p) => {
     let width = 0
     let height = 0
+    const particles = makeParticles(PARTICLE_COUNT)
 
     const measure = () => {
       const rect = host.value.getBoundingClientRect()
@@ -77,6 +83,19 @@ onMounted(async () => {
       const x = width / 2
 
       p.clear()
+
+      // Background field, drawn first so the bubble and its halo sit on top.
+      // deltaTime is capped: a backgrounded tab hands back one huge frame,
+      // which would otherwise teleport the whole field.
+      const dtSeconds = Math.min(p.deltaTime, 100) / 1000
+      stepParticles(particles, snapshot.phase, dtSeconds)
+      const particleScale = Math.min(width, height)
+      for (const particle of particles) {
+        const dot = p.color(colors.accentSoft)
+        dot.setAlpha(particle.alpha)
+        p.fill(dot)
+        p.circle(particle.x * width, particle.y * height, particle.radius * particleScale * 2)
+      }
 
       // Soft halo. Constant strength: the bubble sits on top of it, so any
       // phase-dependent alpha reads as the bubble changing colour.

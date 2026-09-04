@@ -237,6 +237,22 @@ The easing function must map phase progress `0 → 1` onto position `0 → 1`
 exactly, so the bubble reaches each extreme precisely when the phase ends. Easing
 changes the *velocity* within a phase and must never change its *duration*.
 
+### Background particles
+
+A field of small, low-opacity dots drifts behind the bubble. The dots rise while
+the phase is inhale and fall back more slowly while it is exhale, so the
+background carries the breath without competing with the bubble for attention.
+
+Unlike the bubble, the field has no fixed relationship to elapsed time: it
+integrates the current phase over frame delta time, and a dot that leaves one
+vertical edge re-enters at the other. That keeps the field populated for a
+session of any length and lets it survive a dropped frame or a backgrounded tab
+without any resynchronisation, since no part of the guidance depends on where an
+individual dot happens to be.
+
+Frame delta is clamped before integration: a tab returning from the background
+reports one very large frame, which would otherwise move the whole field at once.
+
 ## 4.2 Animation Timing
 
 For a profile with:
