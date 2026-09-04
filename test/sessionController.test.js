@@ -48,7 +48,7 @@ describe('phase derivation', () => {
     expect(s.phaseAt(cycleMs)).toMatchObject({ phase: PHASE.INHALE, progress: 0 })
     expect(s.phaseAt(cycleMs + inhaleMs + holdMs).phase).toBe(PHASE.EXHALE)
 
-    expect(holdMs).toBe(100)
+    expect(holdMs).toBe(400)
     expect(cycleMs).toBe(inhaleMs + exhaleMs + 2 * holdMs)
   })
 
@@ -152,8 +152,8 @@ describe('completion and overflow', () => {
   // SPECS §7.1: always finish on a completed exhale.
   it('ends a Beginner 5-minute session at the end of an exhale, slightly long', () => {
     const clock = fakeClock()
-    const s = session('beginner', 5, clock) // 8.2s cycle with the holds, 300s requested
-    expect(s.endMs).toBe(303_400)
+    const s = session('beginner', 5, clock) // 8.8s cycle with the holds, 300s requested
+    expect(s.endMs).toBe(308_000)
     expect(s.endMs).toBeGreaterThan(s.durationMs)
     expect(s.endMs - s.durationMs).toBeLessThan(s.cycleMs)
     expect(s.endMs % s.cycleMs).toBe(0)
@@ -166,7 +166,7 @@ describe('completion and overflow', () => {
     expect(s.remainingMs()).toBe(0)
     expect(formatRemaining(s.remainingMs())).toBe('0:00')
 
-    clock.advance(3_399)
+    clock.advance(7_999)
     expect(s.tick()).toBe(false)
 
     clock.advance(1)
@@ -176,9 +176,9 @@ describe('completion and overflow', () => {
 
   it('ends exactly on time when the duration divides evenly', () => {
     const clock = fakeClock()
-    // 5s in, 4.8s out plus the two 100ms holds: a 10s cycle, so 60s divides evenly.
+    // 5s in, 4.2s out plus the two 400ms holds: a 10s cycle, so 60s divides evenly.
     const s = createSession({
-      profile: { id: 'even', inhaleSeconds: 5, exhaleSeconds: 4.8 },
+      profile: { id: 'even', inhaleSeconds: 5, exhaleSeconds: 4.2 },
       durationMinutes: 1,
       now: clock.now,
     })

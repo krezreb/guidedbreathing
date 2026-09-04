@@ -30,7 +30,7 @@ export const PHASE = {
  * Applies to every profile; the phase label and cue keep the phase that just
  * finished, so a hold reads as the end of that breath rather than a third state.
  */
-export const HOLD_MS = 100
+export const HOLD_MS = 400
 
 export const PAUSE_REASON = {
   USER: 'USER',

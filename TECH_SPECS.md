@@ -300,14 +300,14 @@ resume()   =  runStartedAt = now()
 The breathing phase and the bubble position are then *derived*, never stored:
 
 ```text
-holdMs         = 100                     // a brief hold at each extreme
+holdMs         = 400                     // a brief hold at each extreme
 cycleMs        = inhaleMs + holdMs + exhaleMs + holdMs
 positionInCycle = elapsed() % cycleMs
 phase           = positionInCycle < inhaleMs + holdMs ? INHALE : EXHALE
 phaseProgress   = clamped 0..1 over the ramp, pinned at 1 through the hold
 ```
 
-The two holds apply to every profile: the bubble settles at the top and at the
+The two 400ms holds apply to every profile: the bubble settles at the top and at the
 bottom rather than reversing on the frame it arrives. A hold keeps the phase
 that just finished, so the label and the cue sound see one inhale and one
 exhale per cycle, not a third state.
