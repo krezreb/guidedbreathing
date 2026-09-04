@@ -18,6 +18,8 @@
  * The iOS ringer switch still mutes Web Audio and nothing here can change that.
  * Nothing in a session ever depends on playback succeeding (TECH_SPECS §22).
  */
+import { ref } from 'vue'
+import { loadPreferences, updatePreferences } from './storage.js'
 import completeUrl from '../assets/audio/complete.wav'
 import inhaleUrl from '../assets/audio/inhale.wav'
 import exhaleUrl from '../assets/audio/exhale.wav'
@@ -37,6 +39,18 @@ const SOUNDS = {
   [SOUND.COMPLETION]: { url: completeUrl, gain: 0.9 },
   [SOUND.INHALE]: { url: inhaleUrl, gain: 0.5 },
   [SOUND.EXHALE]: { url: exhaleUrl, gain: 0.5 },
+}
+
+/**
+ * Sound off. Persisted like any other preference, so a user who breathes in
+ * silence is not asked again next session (TECH_SPECS §7.1). Owned here rather
+ * than by the button, so every caller of `play()` is covered by one guard.
+ */
+export const muted = ref(loadPreferences().soundMuted === true)
+
+export function toggleMute() {
+  muted.value = !muted.value
+  updatePreferences({ soundMuted: muted.value })
 }
 
 let context = null
@@ -95,7 +109,7 @@ export function unlock() {
 export function play(sound = SOUND.COMPLETION) {
   const buffer = buffers.get(sound)
   const settings = SOUNDS[sound]
-  if (!context || !buffer || !settings) return false
+  if (muted.value || !context || !buffer || !settings) return false
   try {
     if (context.state === 'suspended') context.resume().catch(() => {})
     const source = context.createBufferSource()

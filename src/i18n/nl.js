@@ -34,6 +34,10 @@ export default {
     pause: 'Pauze',
     resume: 'Hervatten',
     exit: 'Stoppen',
+    mute: 'Geluid uit',
+    unmute: 'Geluid aan',
+    fullscreen: 'Volledig scherm',
+    exitFullscreen: 'Volledig scherm sluiten',
   },
   exitDialog: {
     title: 'Sessie stoppen?',

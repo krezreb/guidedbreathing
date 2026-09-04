@@ -42,6 +42,10 @@ export default {
     pause: 'Pause',
     resume: 'Resume',
     exit: 'Exit',
+    mute: 'Mute sounds',
+    unmute: 'Unmute sounds',
+    fullscreen: 'Full screen',
+    exitFullscreen: 'Leave full screen',
   },
   exitDialog: {
     title: 'Exit session?',

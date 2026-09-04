@@ -37,6 +37,10 @@ export default {
     pause: 'Pause',
     resume: 'Reprendre',
     exit: 'Quitter',
+    mute: 'Couper le son',
+    unmute: 'Activer le son',
+    fullscreen: 'Plein écran',
+    exitFullscreen: 'Quitter le plein écran',
   },
   exitDialog: {
     title: 'Quitter la séance ?',

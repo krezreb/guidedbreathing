@@ -37,6 +37,10 @@ export default {
     pause: 'Pause',
     resume: 'Fortsetzen',
     exit: 'Beenden',
+    mute: 'Ton aus',
+    unmute: 'Ton an',
+    fullscreen: 'Vollbild',
+    exitFullscreen: 'Vollbild beenden',
   },
   exitDialog: {
     title: 'Sitzung beenden?',
