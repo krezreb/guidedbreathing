@@ -7,7 +7,11 @@ import {
   PHASE,
   SESSION_STATE,
 } from '../src/services/sessionController.js'
-import { BREATHING_PROFILES, findProfile } from '../src/data/breathingProfiles.js'
+import {
+  BREATHING_PROFILES,
+  DEFAULT_HOLD_SECONDS,
+  findProfile,
+} from '../src/data/breathingProfiles.js'
 import { DURATION_PRESETS_MINUTES } from '../src/data/durations.js'
 import { fakeClock } from './helpers.js'
 
@@ -48,8 +52,21 @@ describe('phase derivation', () => {
     expect(s.phaseAt(cycleMs)).toMatchObject({ phase: PHASE.INHALE, progress: 0 })
     expect(s.phaseAt(cycleMs + inhaleMs + holdMs).phase).toBe(PHASE.EXHALE)
 
-    expect(holdMs).toBe(400)
+    expect(holdMs).toBe(DEFAULT_HOLD_SECONDS * 1000)
     expect(cycleMs).toBe(inhaleMs + exhaleMs + 2 * holdMs)
+  })
+
+  it('takes the hold from the profile when it sets one', () => {
+    const s = createSession({
+      profile: { id: 'long-hold', inhaleSeconds: 4, exhaleSeconds: 4, holdSeconds: 2 },
+      durationMinutes: 5,
+      now: fakeClock().now,
+    })
+
+    expect(s.holdMs).toBe(2000)
+    expect(s.cycleMs).toBe(12000)
+    expect(s.phaseAt(5999)).toMatchObject({ phase: PHASE.INHALE, position: 1 })
+    expect(s.phaseAt(6000)).toMatchObject({ phase: PHASE.EXHALE, progress: 0 })
   })
 
   it('puts the bubble at the bottom on inhale start and the top on exhale start', () => {

@@ -17,15 +17,16 @@ vi.mock('../src/services/sounds.js', async (importOriginal) => {
   return { ...actual, unlock: vi.fn(), play: vi.fn(() => true) }
 })
 
-import { findProfile } from '../src/data/breathingProfiles.js'
+import { findProfile, holdMsFor } from '../src/data/breathingProfiles.js'
 import { DEV_DURATION_MINUTES } from '../src/data/durations.js'
-import { HOLD_MS, SESSION_STATE } from '../src/services/sessionController.js'
+import { SESSION_STATE } from '../src/services/sessionController.js'
 import { SOUND, play } from '../src/services/sounds.js'
 import * as session from '../src/services/useSession.js'
 
 const profile = findProfile('beginner') // 3s in, 5s out
 const INHALE_MS = profile.inhaleSeconds * 1000
 const EXHALE_MS = profile.exhaleSeconds * 1000
+const HOLD_MS = holdMsFor(profile)
 const CYCLE_MS = INHALE_MS + EXHALE_MS + 2 * HOLD_MS
 
 /** Advance the fake clock, running the animation frames it passes through. */

@@ -12,6 +12,8 @@
  * FR-10 and FR-11 hold arithmetically rather than by bookkeeping.
  */
 
+import { holdMsFor } from '../data/breathingProfiles.js'
+
 export const SESSION_STATE = {
   IDLE: 'IDLE',
   RUNNING: 'RUNNING',
@@ -23,14 +25,6 @@ export const PHASE = {
   INHALE: 'INHALE',
   EXHALE: 'EXHALE',
 }
-
-/**
- * A brief hold at each extreme of the breath, so the bubble settles at the top
- * and the bottom instead of reversing on the exact same frame it arrives.
- * Applies to every profile; the phase label and cue keep the phase that just
- * finished, so a hold reads as the end of that breath rather than a third state.
- */
-export const HOLD_MS = 400
 
 export const PAUSE_REASON = {
   USER: 'USER',
@@ -58,7 +52,11 @@ export function ease(t) {
 export function createSession({ profile, durationMinutes, now = () => performance.now() }) {
   const inhaleMs = profile.inhaleSeconds * 1000
   const exhaleMs = profile.exhaleSeconds * 1000
-  const cycleMs = inhaleMs + HOLD_MS + exhaleMs + HOLD_MS
+  // A brief hold at each extreme, configured with the profile timings
+  // (data/breathingProfiles). The phase label and cue keep the phase that just
+  // finished, so a hold reads as the end of that breath, not a third state.
+  const holdMs = holdMsFor(profile)
+  const cycleMs = inhaleMs + holdMs + exhaleMs + holdMs
   const durationMs = durationMinutes * 60 * 1000
 
   /**
@@ -151,7 +149,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
       }
     }
 
-    const holdTopEnd = inhaleMs + HOLD_MS
+    const holdTopEnd = inhaleMs + holdMs
     if (positionInCycle < holdTopEnd) {
       return {
         phase: PHASE.INHALE,
@@ -215,7 +213,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
     durationMs,
     inhaleMs,
     exhaleMs,
-    holdMs: HOLD_MS,
+    holdMs,
     cycleMs,
     endMs,
     start,
