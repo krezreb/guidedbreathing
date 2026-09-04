@@ -65,7 +65,7 @@ onMounted(async () => {
       const travel = trackBottom - trackTop
 
       // Bubble grows slightly toward the top: fuller lungs, gentler read.
-      const baseRadius = Math.min(width, height) * 0.085
+      const baseRadius = Math.min(width, height) * 0.125
       const radius = baseRadius * (0.85 + 0.3 * snapshot.position)
 
       // position 0 = bottom of the guide, 1 = top.
