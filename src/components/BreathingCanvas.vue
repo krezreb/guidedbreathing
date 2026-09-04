@@ -17,6 +17,10 @@ const props = defineProps({
   controller: { type: Object, required: true },
 })
 
+/** Halo geometry, shared by the draw loop and the track inset. */
+const HALO_RINGS = 4
+const HALO_SPREAD = 0.42
+
 const host = ref(null)
 let sketch = null
 let observer = null
@@ -56,14 +60,18 @@ onMounted(async () => {
 
     p.draw = () => {
       const snapshot = props.controller.snapshot()
-      const inset = Math.min(width, height) * 0.06
-      const trackTop = inset
-      const trackBottom = height - inset
-      const travel = trackBottom - trackTop
 
       // Bubble grows slightly toward the top: fuller lungs, gentler read.
       const baseRadius = Math.min(width, height) * 0.125
       const radius = baseRadius * (0.85 + 0.3 * snapshot.position)
+
+      // Inset the track by the widest halo so the outermost ring stays inside
+      // the guide at both extremes rather than being clipped by its edges.
+      const haloReach = baseRadius * 1.15 * (1 + HALO_RINGS * HALO_SPREAD)
+      const inset = Math.min(Math.max(Math.min(width, height) * 0.06, haloReach), height * 0.4)
+      const trackTop = inset
+      const trackBottom = height - inset
+      const travel = trackBottom - trackTop
 
       // position 0 = bottom of the guide, 1 = top.
       const y = trackBottom - snapshot.position * travel
@@ -73,11 +81,11 @@ onMounted(async () => {
 
       // Soft halo, brighter while inhaling.
       const haloStrength = snapshot.phase === PHASE.INHALE ? 26 : 18
-      for (let ring = 4; ring >= 1; ring -= 1) {
+      for (let ring = HALO_RINGS; ring >= 1; ring -= 1) {
         const halo = p.color(colors.accent)
         halo.setAlpha(haloStrength / ring)
         p.fill(halo)
-        p.circle(x, y, radius * 2 * (1 + ring * 0.42))
+        p.circle(x, y, radius * 2 * (1 + ring * HALO_SPREAD))
       }
 
       p.fill(colors.accentSoft)
