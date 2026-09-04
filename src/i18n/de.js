@@ -70,7 +70,7 @@ export default {
     ],
     resourcesHeading: 'Mehr erfahren',
     resourcesIntro:
-      'Diese Seiten werden von Gesundheits- und Psychologieorganisationen veröffentlicht, nicht von dieser App. Sie öffnen sich in Ihrem Browser.',
+      'Diese Seiten werden von Gesundheits- und Psychologieorganisationen veröffentlicht, nicht von dieser App. Sie öffnen sich in deinem Browser.',
     comingSoon: 'Link folgt',
     languageNote: {
       en: 'auf Englisch',
@@ -79,7 +79,7 @@ export default {
   resources: {
     'nhs-breathing-exercises': {
       title: 'Atemübungen bei Stress — NHS',
-      note: 'Eine kurze, praktische Einführung in langsames Atmen: wie Sie sitzen oder liegen, wie Sie in den Bauch atmen und wie Sie ruhig mitzählen.',
+      note: 'Eine kurze, praktische Einführung in langsames Atmen: wie du sitzt oder liegst, wie du in den Bauch atmest und wie du ruhig mitzählst.',
     },
     'apa-stress-management-tools': {
       title: 'Werkzeuge zur Stressbewältigung — American Psychological Association',
@@ -90,7 +90,7 @@ export default {
       note: 'Warum es hilft, auf den eigenen Atem zu achten — allgemein verständlich von einem Zentrum, das psychologische Forschung aufbereitet, mit Verweisen auf veröffentlichte Studien.',
     },
     'nccih-relaxation-techniques': {
-      title: 'Entspannungstechniken: Was Sie wissen sollten — NCCIH',
+      title: 'Entspannungstechniken: Was du wissen solltest — NCCIH',
       note: 'Wo Atmen unter den anderen Entspannungstechniken steht, was die Evidenz zeigt und was nicht — das unterscheidet sich je nach Beschwerdebild — und vernünftige Sicherheitshinweise.',
     },
     'apa-handling-stressors': {
