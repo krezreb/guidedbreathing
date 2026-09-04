@@ -24,6 +24,14 @@ export const PHASE = {
   EXHALE: 'EXHALE',
 }
 
+/**
+ * A brief hold at each extreme of the breath, so the bubble settles at the top
+ * and the bottom instead of reversing on the exact same frame it arrives.
+ * Applies to every profile; the phase label and cue keep the phase that just
+ * finished, so a hold reads as the end of that breath rather than a third state.
+ */
+export const HOLD_MS = 100
+
 export const PAUSE_REASON = {
   USER: 'USER',
   HIDDEN: 'HIDDEN',
@@ -50,7 +58,7 @@ export function ease(t) {
 export function createSession({ profile, durationMinutes, now = () => performance.now() }) {
   const inhaleMs = profile.inhaleSeconds * 1000
   const exhaleMs = profile.exhaleSeconds * 1000
-  const cycleMs = inhaleMs + exhaleMs
+  const cycleMs = inhaleMs + HOLD_MS + exhaleMs + HOLD_MS
   const durationMs = durationMinutes * 60 * 1000
 
   /**
@@ -131,6 +139,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
 
   function phaseAt(elapsedMs) {
     const positionInCycle = ((elapsedMs % cycleMs) + cycleMs) % cycleMs
+
     if (positionInCycle < inhaleMs) {
       const progress = inhaleMs === 0 ? 1 : positionInCycle / inhaleMs
       return {
@@ -141,13 +150,33 @@ export function createSession({ profile, durationMinutes, now = () => performanc
         position: ease(progress),
       }
     }
-    const intoExhale = positionInCycle - inhaleMs
-    const progress = exhaleMs === 0 ? 1 : intoExhale / exhaleMs
+
+    const holdTopEnd = inhaleMs + HOLD_MS
+    if (positionInCycle < holdTopEnd) {
+      return {
+        phase: PHASE.INHALE,
+        progress: 1,
+        remainingMs: holdTopEnd - positionInCycle,
+        position: 1,
+      }
+    }
+
+    const intoExhale = positionInCycle - holdTopEnd
+    if (intoExhale < exhaleMs) {
+      const progress = exhaleMs === 0 ? 1 : intoExhale / exhaleMs
+      return {
+        phase: PHASE.EXHALE,
+        progress,
+        remainingMs: exhaleMs - intoExhale,
+        position: 1 - ease(progress),
+      }
+    }
+
     return {
       phase: PHASE.EXHALE,
-      progress,
-      remainingMs: exhaleMs - intoExhale,
-      position: 1 - ease(progress),
+      progress: 1,
+      remainingMs: cycleMs - positionInCycle,
+      position: 0,
     }
   }
 
@@ -186,6 +215,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
     durationMs,
     inhaleMs,
     exhaleMs,
+    holdMs: HOLD_MS,
     cycleMs,
     endMs,
     start,

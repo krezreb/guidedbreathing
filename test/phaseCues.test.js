@@ -19,13 +19,14 @@ vi.mock('../src/services/sounds.js', async (importOriginal) => {
 
 import { findProfile } from '../src/data/breathingProfiles.js'
 import { DEV_DURATION_MINUTES } from '../src/data/durations.js'
-import { SESSION_STATE } from '../src/services/sessionController.js'
+import { HOLD_MS, SESSION_STATE } from '../src/services/sessionController.js'
 import { SOUND, play } from '../src/services/sounds.js'
 import * as session from '../src/services/useSession.js'
 
 const profile = findProfile('beginner') // 3s in, 5s out
 const INHALE_MS = profile.inhaleSeconds * 1000
 const EXHALE_MS = profile.exhaleSeconds * 1000
+const CYCLE_MS = INHALE_MS + EXHALE_MS + 2 * HOLD_MS
 
 /** Advance the fake clock, running the animation frames it passes through. */
 function run(ms) {
@@ -67,28 +68,28 @@ describe('phase cue sounds', () => {
     run(INHALE_MS - 200)
     expect(cues()).toEqual([])
 
-    // End of the first inhale: breathe out.
-    run(400)
+    // End of the first inhale, once the hold at the top is over: breathe out.
+    run(400 + HOLD_MS)
     expect(cues()).toEqual([SOUND.EXHALE])
 
     run(EXHALE_MS - 400)
     expect(cues()).toEqual([SOUND.EXHALE])
 
-    // End of the first exhale: breathe in.
-    run(400)
+    // End of the first exhale and its hold: breathe in.
+    run(400 + HOLD_MS)
     expect(cues()).toEqual([SOUND.EXHALE, SOUND.INHALE])
   })
 
   it('plays one cue per phase, on the first frame of the new phase', () => {
     session.begin()
-    run(INHALE_MS + EXHALE_MS + INHALE_MS + 100)
+    run(CYCLE_MS + INHALE_MS + HOLD_MS + 100)
     // Two boundaries crossed in the middle of the session, two cues.
     expect(cues()).toEqual([SOUND.EXHALE, SOUND.INHALE, SOUND.EXHALE])
   })
 
   it('makes no sound while the session is paused', () => {
     session.begin()
-    run(INHALE_MS + 100)
+    run(INHALE_MS + HOLD_MS + 100)
     expect(cues()).toEqual([SOUND.EXHALE])
 
     session.pause()
@@ -98,7 +99,7 @@ describe('phase cue sounds', () => {
     expect(cues()).toEqual([SOUND.EXHALE])
 
     session.resume()
-    run(EXHALE_MS)
+    run(EXHALE_MS + HOLD_MS)
     expect(cues()).toEqual([SOUND.EXHALE, SOUND.INHALE])
   })
 
@@ -118,7 +119,7 @@ describe('phase cue sounds', () => {
     session.selectDuration(DEV_DURATION_MINUTES)
     session.begin()
 
-    run(INHALE_MS + EXHALE_MS + 500)
+    run(CYCLE_MS + 500)
     expect(session.sessionState.value).toBe(SESSION_STATE.COMPLETED)
 
     // The end of that exhale is also the end of the session: one sound, not two.
@@ -128,7 +129,7 @@ describe('phase cue sounds', () => {
 
   it('plays no cue at all when the user exits mid-session', () => {
     session.begin()
-    run(INHALE_MS + 100)
+    run(INHALE_MS + HOLD_MS + 100)
     play.mockClear()
 
     session.requestExit()

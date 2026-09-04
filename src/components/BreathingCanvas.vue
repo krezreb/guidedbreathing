@@ -28,7 +28,6 @@ function palette() {
   return {
     accent: read('--color-accent'),
     accentSoft: read('--color-accent-soft'),
-    primary: read('--color-primary'),
   }
 }
 
@@ -71,13 +70,6 @@ onMounted(async () => {
       const x = width / 2
 
       p.clear()
-
-      // End markers for the extremes of the breath.
-      p.fill(colors.primary)
-      const capWidth = Math.min(width * 0.22, 120)
-      const capHeight = Math.max(2, width * 0.005)
-      p.rect(x - capWidth / 2, trackTop - capHeight / 2, capWidth, capHeight, capHeight)
-      p.rect(x - capWidth / 2, trackBottom - capHeight / 2, capWidth, capHeight, capHeight)
 
       // Soft halo, brighter while inhaling.
       const haloStrength = snapshot.phase === PHASE.INHALE ? 26 : 18

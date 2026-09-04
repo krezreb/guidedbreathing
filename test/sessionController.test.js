@@ -24,20 +24,32 @@ describe('phase derivation', () => {
   it.each(BREATHING_PROFILES)('follows $id across a cycle boundary', (profile) => {
     const clock = fakeClock()
     const s = session(profile.id, 5, clock)
-    const { inhaleMs, exhaleMs, cycleMs } = s
+    const { inhaleMs, exhaleMs, cycleMs, holdMs } = s
 
     expect(s.phaseAt(0)).toMatchObject({ phase: PHASE.INHALE, progress: 0 })
     expect(s.phaseAt(inhaleMs - 1).phase).toBe(PHASE.INHALE)
 
-    // The instant the inhale ends is the start of the exhale, with no gap.
-    expect(s.phaseAt(inhaleMs)).toMatchObject({ phase: PHASE.EXHALE, progress: 0 })
-    expect(s.phaseAt(cycleMs - 1).phase).toBe(PHASE.EXHALE)
+    // The inhale ends on a brief hold at the top, still read as the inhale.
+    expect(s.phaseAt(inhaleMs)).toMatchObject({ phase: PHASE.INHALE, progress: 1, position: 1 })
+    expect(s.phaseAt(inhaleMs + holdMs - 1)).toMatchObject({ phase: PHASE.INHALE, position: 1 })
 
-    // And the cycle wraps back to a fresh inhale.
+    // Then straight into the exhale, with no gap.
+    expect(s.phaseAt(inhaleMs + holdMs)).toMatchObject({ phase: PHASE.EXHALE, progress: 0 })
+    expect(s.phaseAt(cycleMs - holdMs - 1).phase).toBe(PHASE.EXHALE)
+
+    // And a matching hold at the bottom before the cycle wraps.
+    expect(s.phaseAt(cycleMs - holdMs)).toMatchObject({
+      phase: PHASE.EXHALE,
+      progress: 1,
+      position: 0,
+    })
+    expect(s.phaseAt(cycleMs - 1)).toMatchObject({ phase: PHASE.EXHALE, position: 0 })
+
     expect(s.phaseAt(cycleMs)).toMatchObject({ phase: PHASE.INHALE, progress: 0 })
-    expect(s.phaseAt(cycleMs + inhaleMs).phase).toBe(PHASE.EXHALE)
+    expect(s.phaseAt(cycleMs + inhaleMs + holdMs).phase).toBe(PHASE.EXHALE)
 
-    expect(cycleMs).toBe(inhaleMs + exhaleMs)
+    expect(holdMs).toBe(100)
+    expect(cycleMs).toBe(inhaleMs + exhaleMs + 2 * holdMs)
   })
 
   it('puts the bubble at the bottom on inhale start and the top on exhale start', () => {
@@ -79,10 +91,10 @@ describe('pause and resume', () => {
     s.resume()
     expect(s.snapshot()).toMatchObject({ phase: PHASE.INHALE, phaseRemainingMs: 4000 })
 
-    // The remaining 4s of the inhale, then straight into the exhale.
+    // The remaining 4s of the inhale, the hold at the top, then the exhale.
     clock.advance(3999)
     expect(s.snapshot().phase).toBe(PHASE.INHALE)
-    clock.advance(1)
+    clock.advance(1 + s.holdMs)
     expect(s.snapshot()).toMatchObject({ phase: PHASE.EXHALE, phaseProgress: 0 })
   })
 
@@ -140,8 +152,8 @@ describe('completion and overflow', () => {
   // SPECS §7.1: always finish on a completed exhale.
   it('ends a Beginner 5-minute session at the end of an exhale, slightly long', () => {
     const clock = fakeClock()
-    const s = session('beginner', 5, clock) // 8s cycle, 300s requested
-    expect(s.endMs).toBe(304_000)
+    const s = session('beginner', 5, clock) // 8.2s cycle with the holds, 300s requested
+    expect(s.endMs).toBe(303_400)
     expect(s.endMs).toBeGreaterThan(s.durationMs)
     expect(s.endMs - s.durationMs).toBeLessThan(s.cycleMs)
     expect(s.endMs % s.cycleMs).toBe(0)
@@ -154,7 +166,7 @@ describe('completion and overflow', () => {
     expect(s.remainingMs()).toBe(0)
     expect(formatRemaining(s.remainingMs())).toBe('0:00')
 
-    clock.advance(3_999)
+    clock.advance(3_399)
     expect(s.tick()).toBe(false)
 
     clock.advance(1)
@@ -164,7 +176,13 @@ describe('completion and overflow', () => {
 
   it('ends exactly on time when the duration divides evenly', () => {
     const clock = fakeClock()
-    const s = session('chill', 1, clock) // 12s cycle, 60s requested
+    // 5s in, 4.8s out plus the two 100ms holds: a 10s cycle, so 60s divides evenly.
+    const s = createSession({
+      profile: { id: 'even', inhaleSeconds: 5, exhaleSeconds: 4.8 },
+      durationMinutes: 1,
+      now: clock.now,
+    })
+    expect(s.cycleMs).toBe(10_000)
     expect(s.endMs).toBe(60_000)
     s.start()
     clock.advance(60_000)

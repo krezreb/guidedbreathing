@@ -138,14 +138,14 @@ describe('a one-breath session', () => {
     expect(s.snapshot().phase).toBe(PHASE.INHALE)
     expect(s.tick()).toBe(false)
 
-    // One breath is not over until the exhale has finished.
-    clock.advance(1)
+    // One breath is not over until the exhale, and its hold, have finished.
+    clock.advance(1 + s.holdMs)
     expect(s.snapshot().phase).toBe(PHASE.EXHALE)
     clock.advance(s.exhaleMs - 1)
     expect(s.tick()).toBe(false)
     expect(s.state).toBe(SESSION_STATE.RUNNING)
 
-    clock.advance(1)
+    clock.advance(1 + s.holdMs)
     expect(s.tick()).toBe(true)
     expect(s.state).toBe(SESSION_STATE.COMPLETED)
     expect(s.elapsed()).toBe(s.cycleMs)
