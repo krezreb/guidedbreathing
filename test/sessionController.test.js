@@ -30,7 +30,7 @@ describe('phase derivation', () => {
     expect(s.phaseAt(inhaleMs - 1).phase).toBe(PHASE.INHALE)
 
     // The inhale ends on a brief hold at the top, still read as the inhale.
-    expect(s.phaseAt(inhaleMs)).toMatchObject({ phase: PHASE.INHALE, progress: 1, position: 1 })
+    expect(s.phaseAt(inhaleMs)).toMatchObject({ phase: PHASE.INHALE, progress: 1 })
     expect(s.phaseAt(inhaleMs + holdMs - 1)).toMatchObject({ phase: PHASE.INHALE, position: 1 })
 
     // Then straight into the exhale, with no gap.
@@ -38,11 +38,7 @@ describe('phase derivation', () => {
     expect(s.phaseAt(cycleMs - holdMs - 1).phase).toBe(PHASE.EXHALE)
 
     // And a matching hold at the bottom before the cycle wraps.
-    expect(s.phaseAt(cycleMs - holdMs)).toMatchObject({
-      phase: PHASE.EXHALE,
-      progress: 1,
-      position: 0,
-    })
+    expect(s.phaseAt(cycleMs - holdMs)).toMatchObject({ phase: PHASE.EXHALE, progress: 1 })
     expect(s.phaseAt(cycleMs - 1)).toMatchObject({ phase: PHASE.EXHALE, position: 0 })
 
     expect(s.phaseAt(cycleMs)).toMatchObject({ phase: PHASE.INHALE, progress: 0 })
@@ -52,12 +48,35 @@ describe('phase derivation', () => {
     expect(cycleMs).toBe(inhaleMs + exhaleMs + 2 * holdMs)
   })
 
-  it('puts the bubble at the bottom on inhale start and the top on exhale start', () => {
+  it('puts the bubble at the bottom on inhale start and the top at the end of the rise', () => {
     const clock = fakeClock()
     const s = session('chill', 5, clock)
+    const { inhaleMs, holdMs, visualHoldMs, cycleMs } = s
     expect(s.phaseAt(0).position).toBeCloseTo(0, 10)
-    expect(s.phaseAt(s.inhaleMs).position).toBeCloseTo(1, 10)
-    expect(s.phaseAt(s.cycleMs).position).toBeCloseTo(0, 10)
+    expect(s.phaseAt(inhaleMs + holdMs - visualHoldMs).position).toBeCloseTo(1, 10)
+    expect(s.phaseAt(cycleMs).position).toBeCloseTo(0, 10)
+  })
+
+  // The bubble is parked only for the last VISUAL_HOLD_MS of each hold: it is
+  // still creeping into the extreme for the rest of it, so the approach reads
+  // as fluid rather than as a long stop.
+  it.each(BREATHING_PROFILES)('keeps $id moving through all but 100ms of each hold', (profile) => {
+    const clock = fakeClock()
+    const s = session(profile.id, 5, clock)
+    const { inhaleMs, holdMs, visualHoldMs, cycleMs } = s
+    const topStops = inhaleMs + holdMs - visualHoldMs
+    const bottomStops = cycleMs - visualHoldMs
+
+    expect(visualHoldMs).toBe(100)
+    expect(s.phaseAt(topStops - 1).position).toBeLessThan(1)
+    expect(s.phaseAt(topStops).position).toBeCloseTo(1, 10)
+    expect(s.phaseAt(bottomStops - 1).position).toBeGreaterThan(0)
+    expect(s.phaseAt(bottomStops).position).toBeCloseTo(0, 10)
+
+    // And it arrives still moving: the last frame before the stop covers real
+    // distance, rather than crawling the final pixels for half a second.
+    const speedAtTop = 1 - s.phaseAt(topStops - 100).position
+    expect(speedAtTop).toBeGreaterThan(0.5 * (100 / topStops))
   })
 
   it('eases without changing phase endpoints', () => {

@@ -32,21 +32,37 @@ export const PHASE = {
  */
 export const HOLD_MS = 400
 
+/**
+ * How much of a hold the bubble actually spends motionless. The rest of the
+ * hold is spent still creeping into the extreme, so the approach stays fluid
+ * and the bubble is never visibly parked for longer than this.
+ */
+export const VISUAL_HOLD_MS = 100
+
 export const PAUSE_REASON = {
   USER: 'USER',
   HIDDEN: 'HIDDEN',
 }
 
 /**
- * Half-cosine ease, mapping progress 0..1 onto position 0..1 exactly.
+ * How much of the ease is linear. A pure half-cosine has zero velocity at both
+ * endpoints, which reads as a long standstill on top of the hold; mixing in
+ * some linear travel keeps the bubble visibly moving right up to the extreme
+ * while still slowing into it.
+ */
+const LINEAR_MIX = 0.5
+
+/**
+ * Eased ramp, mapping progress 0..1 onto position 0..1 exactly.
  *
  * The bubble slows as it approaches each extreme, the way breath does. The
- * endpoints are exact, so the bubble arrives precisely when the phase ends:
- * easing changes velocity within a phase, never its duration (TECH_SPECS §4.1).
+ * endpoints are exact, so the bubble arrives precisely when the ramp ends:
+ * easing changes velocity within a ramp, never its duration (TECH_SPECS §4.1).
  */
 export function ease(t) {
   const clamped = t < 0 ? 0 : t > 1 ? 1 : t
-  return (1 - Math.cos(Math.PI * clamped)) / 2
+  const cosine = (1 - Math.cos(Math.PI * clamped)) / 2
+  return cosine * (1 - LINEAR_MIX) + clamped * LINEAR_MIX
 }
 
 /**
@@ -59,6 +75,12 @@ export function createSession({ profile, durationMinutes, now = () => performanc
   const inhaleMs = profile.inhaleSeconds * 1000
   const exhaleMs = profile.exhaleSeconds * 1000
   const cycleMs = inhaleMs + HOLD_MS + exhaleMs + HOLD_MS
+
+  // The bubble keeps travelling through all but the last VISUAL_HOLD_MS of each
+  // hold, so movement and breath phase share a boundary but not a ramp length.
+  const riseMs = inhaleMs + HOLD_MS - VISUAL_HOLD_MS
+  const fallStartMs = inhaleMs + HOLD_MS
+  const fallMs = exhaleMs + HOLD_MS - VISUAL_HOLD_MS
   const durationMs = durationMinutes * 60 * 1000
 
   /**
@@ -137,8 +159,18 @@ export function createSession({ profile, durationMinutes, now = () => performanc
     return true
   }
 
+  /** Bubble position for a point in the cycle: 0 = bottom of the guide, 1 = top. */
+  function positionInCycleAt(positionInCycle) {
+    if (positionInCycle < riseMs) return ease(riseMs === 0 ? 1 : positionInCycle / riseMs)
+    if (positionInCycle < fallStartMs) return 1
+    const intoFall = positionInCycle - fallStartMs
+    if (intoFall < fallMs) return 1 - ease(fallMs === 0 ? 1 : intoFall / fallMs)
+    return 0
+  }
+
   function phaseAt(elapsedMs) {
     const positionInCycle = ((elapsedMs % cycleMs) + cycleMs) % cycleMs
+    const position = positionInCycleAt(positionInCycle)
 
     if (positionInCycle < inhaleMs) {
       const progress = inhaleMs === 0 ? 1 : positionInCycle / inhaleMs
@@ -146,8 +178,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
         phase: PHASE.INHALE,
         progress,
         remainingMs: inhaleMs - positionInCycle,
-        // 0 = bottom of the guide, 1 = top.
-        position: ease(progress),
+        position,
       }
     }
 
@@ -157,7 +188,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
         phase: PHASE.INHALE,
         progress: 1,
         remainingMs: holdTopEnd - positionInCycle,
-        position: 1,
+        position,
       }
     }
 
@@ -168,7 +199,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
         phase: PHASE.EXHALE,
         progress,
         remainingMs: exhaleMs - intoExhale,
-        position: 1 - ease(progress),
+        position,
       }
     }
 
@@ -176,7 +207,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
       phase: PHASE.EXHALE,
       progress: 1,
       remainingMs: cycleMs - positionInCycle,
-      position: 0,
+      position,
     }
   }
 
@@ -216,6 +247,7 @@ export function createSession({ profile, durationMinutes, now = () => performanc
     inhaleMs,
     exhaleMs,
     holdMs: HOLD_MS,
+    visualHoldMs: VISUAL_HOLD_MS,
     cycleMs,
     endMs,
     start,

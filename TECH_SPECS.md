@@ -230,12 +230,19 @@ This ensures that timing remains correct if the browser temporarily drops animat
 ### Easing
 
 Motion should be eased rather than strictly linear, so that the bubble slows as
-it approaches each extreme the way breath does. A smoothstep or half-cosine ease
-over the phase's normalised progress is sufficient.
+it approaches each extreme the way breath does. A pure half-cosine, though, has
+zero velocity at both endpoints, and on top of a hold that reads as the bubble
+being parked for the best part of a second. The ease is therefore a half-cosine
+mixed half-and-half with linear travel: still visibly slowing into each extreme,
+but arriving while genuinely moving.
 
-The easing function must map phase progress `0 → 1` onto position `0 → 1`
-exactly, so the bubble reaches each extreme precisely when the phase ends. Easing
-changes the *velocity* within a phase and must never change its *duration*.
+The bubble also keeps travelling through all but the last 100ms of each hold, so
+the ramp is longer than the breath phase and the bubble is never motionless for
+more than that 100ms.
+
+The easing function must map ramp progress `0 → 1` onto position `0 → 1`
+exactly, so the bubble reaches each extreme precisely when the ramp ends. Easing
+changes the *velocity* within a ramp and must never change its *duration*.
 
 ## 4.2 Animation Timing
 
