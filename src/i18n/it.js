@@ -34,6 +34,10 @@ export default {
     pause: 'Pausa',
     resume: 'Riprendi',
     exit: 'Esci',
+    mute: 'Disattiva i suoni',
+    unmute: 'Attiva i suoni',
+    fullscreen: 'Schermo intero',
+    exitFullscreen: 'Esci da schermo intero',
   },
   exitDialog: {
     title: 'Uscire dalla sessione?',
