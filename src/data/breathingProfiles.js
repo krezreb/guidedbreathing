@@ -14,7 +14,7 @@
  * Configured here alongside the other breath timings. A profile may override it
  * with its own `holdSeconds`; profiles that omit it get this value.
  */
-export const DEFAULT_HOLD_SECONDS = 0.4
+export const DEFAULT_HOLD_SECONDS = 0.2
 
 export const BREATHING_PROFILES = [
   { id: 'strengthen', inhaleSeconds: 6, exhaleSeconds: 6 },
