@@ -237,6 +237,42 @@ The easing function must map phase progress `0 → 1` onto position `0 → 1`
 exactly, so the bubble reaches each extreme precisely when the phase ends. Easing
 changes the *velocity* within a phase and must never change its *duration*.
 
+### Background particles
+
+A field of small, low-opacity dots drifts behind the bubble. The dots rise while
+the phase is inhale and fall back more slowly while it is exhale, so the
+background carries the breath without competing with the bubble for attention.
+
+The dots have weight. A phase sets an acceleration rather than a speed, and each
+dot keeps its velocity across the phase change: one still travelling upward when
+the exhale begins decelerates, stalls, and only then starts to fall. Speed is
+capped at a terminal value per direction, lower for falling than for rising, so
+the field never builds up more speed than the breath it illustrates. Reversing
+velocity outright at the phase boundary is what this avoids: it reads as
+weightless confetti, not as something with mass.
+
+Unlike the bubble, the field has no fixed relationship to elapsed time: it
+integrates the current phase over frame delta time, and a dot that leaves one
+vertical edge re-enters at the other. That keeps the field populated for a
+session of any length and lets it survive a dropped frame or a backgrounded tab
+without any resynchronisation, since no part of the guidance depends on where an
+individual dot happens to be.
+
+Each dot fades in as it appears, holds full opacity for most of its life, and
+fades out at the end, after which it respawns somewhere else with freshly
+randomised motion. Lives are staggered at startup and spread over a wide range,
+so the field never fades in or blinks out in unison. Nothing appears or vanishes
+abruptly, which is what keeps the field from reading as a distraction.
+
+Every randomised quantity — radius, peak opacity, mass, starting momentum,
+lifetime — is drawn from a `[min, max]` range, and all of those ranges plus the
+two accelerations and the two terminal speeds live in one config module
+(`data/particleField.js`). The field's character is therefore tunable in one
+place, without touching either the physics or the draw loop.
+
+Frame delta is clamped before integration: a tab returning from the background
+reports one very large frame, which would otherwise move the whole field at once.
+
 ## 4.2 Animation Timing
 
 For a profile with:
