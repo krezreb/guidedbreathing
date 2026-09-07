@@ -65,9 +65,10 @@ const emit = defineEmits(['update:modelValue'])
 
 .selector__grid {
   display: grid;
-  /* Two rows of four on a phone; the grid reflows on its own if the preset list
-     changes length. */
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* As many presets per row as the column can hold: four across a phone,
+     two in the narrow side column beside the profiles. No breakpoint of its
+     own, and it reflows on its own if the preset list changes length. */
+  grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
   gap: var(--space-sm);
 }
 

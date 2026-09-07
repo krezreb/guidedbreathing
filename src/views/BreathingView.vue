@@ -28,17 +28,17 @@ const phaseLabel = computed(() =>
   <main class="session">
     <SessionTimer :label="remainingLabel" :visible="isPaused" />
 
-    <div class="session__guide">
-      <BreathingCanvas v-if="controller" :controller="controller" />
+    <div class="session__phase" :class="{ 'session__phase--paused': isPaused }">
+      <p class="session__phase-text" aria-live="polite">
+        {{ isPaused ? t('session.paused') : phaseLabel }}
+      </p>
+      <p v-if="pausedWhileAway" class="session__phase-note">
+        {{ t('session.pausedAway') }}
+      </p>
+    </div>
 
-      <div class="session__phase" :class="{ 'session__phase--paused': isPaused }">
-        <p class="session__phase-text" aria-live="polite">
-          {{ isPaused ? t('session.paused') : phaseLabel }}
-        </p>
-        <p v-if="pausedWhileAway" class="session__phase-note">
-          {{ t('session.pausedAway') }}
-        </p>
-      </div>
+    <div class="session__stage">
+      <BreathingCanvas v-if="controller" :controller="controller" />
     </div>
 
     <SessionControls :paused="isPaused" @toggle="togglePause" @exit="requestExit" />
@@ -51,42 +51,31 @@ const phaseLabel = computed(() =>
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  max-width: 34rem;
+  max-width: 50rem;
   width: 100%;
   margin: 0 auto;
   padding: var(--space-sm) 0;
 }
 
 /* The guide takes all the height left over: the breathing animation is the
-   screen, the controls are the margin (TECH_SPECS §11). The bubble travels
-   vertically, so it stays a narrow centred column — a third of the window
-   width, never wider than the session column. */
-.session__guide {
+   screen, the controls are the margin (TECH_SPECS §11). The stage spans the
+   full session column — the narrow track and the halo that spills past it are
+   both drawn on the canvas, so nothing here clips them. */
+.session__stage {
   position: relative;
   flex: 1;
-  width: 33vw;
-  max-width: 100%;
+  width: 100%;
   min-height: 12rem;
-  margin: 0 auto;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
 }
 
-/* Wider than the guide on purpose: the labels stay centred on the column but
-   spill past its edges rather than wrapping inside 33vw. */
+/* Above the stage, not over it: the prompt reads as a heading for the
+   animation and never sits behind the travelling bubble. */
 .session__phase {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: max-content;
-  max-width: 90vw;
-  transform: translate(-50%, -50%);
   display: grid;
   gap: var(--space-xs);
   justify-items: center;
+  text-align: center;
   pointer-events: none;
-  padding: 0 var(--space-md);
 }
 
 .session__phase-text {
@@ -96,7 +85,6 @@ const phaseLabel = computed(() =>
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-text-muted);
-  text-shadow: 0 0 1.5rem var(--color-background);
   transition: color 400ms var(--ease-calm);
 }
 
@@ -108,18 +96,12 @@ const phaseLabel = computed(() =>
   margin: 0;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
-  text-align: center;
-  text-shadow: 0 0 1.5rem var(--color-background);
 }
 
 /* In landscape the guide would be squat; give the controls less room and let
    the guide keep as much height as possible. */
 @media (orientation: landscape) and (max-height: 30rem) {
-  .session {
-    max-width: 46rem;
-  }
-
-  .session__guide {
+  .session__stage {
     min-height: 8rem;
   }
 }

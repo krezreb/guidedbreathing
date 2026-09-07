@@ -59,8 +59,10 @@ const emit = defineEmits(['update:modelValue'])
 }
 
 .option {
-  display: grid;
-  gap: 0.125rem;
+  /* Block rather than grid: a grid inside a <button> is laid out at its
+     max-content width in Chrome, which clips the description instead of
+     wrapping it. Stacked blocks wrap normally. */
+  display: block;
   padding: var(--space-md);
   min-height: var(--touch-min);
   text-align: left;
@@ -77,6 +79,12 @@ const emit = defineEmits(['update:modelValue'])
   background: var(--color-surface-raised);
   border-color: var(--color-secondary);
   border-left-color: var(--color-accent);
+}
+
+.option__name,
+.option__timing,
+.option__description {
+  display: block;
 }
 
 .option__name {

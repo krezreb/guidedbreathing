@@ -6,6 +6,10 @@
  * be, so position derives from real elapsed time rather than frame count and
  * dropped frames cannot desynchronise the animation from the timer.
  *
+ * The guide track is drawn by p5 rather than by a DOM box behind it: the halo
+ * is wider than the track on purpose, and a DOM box would either clip it or
+ * need its geometry duplicated in CSS and here.
+ *
  * Instance mode with an explicit remove() on unmount: p5 installs its own
  * animation loop and global listeners, and leaks a running sketch per session
  * otherwise.
@@ -16,9 +20,13 @@ const props = defineProps({
   controller: { type: Object, required: true },
 })
 
-/** Halo geometry, shared by the draw loop and the track inset. */
+/** Halo geometry, shared by the draw loop and the travel inset. */
 const HALO_RINGS = 4
 const HALO_SPREAD = 0.42
+
+/** Track width as a share of the stage, capped so it stays a narrow column. */
+const TRACK_RATIO = 0.34
+const TRACK_MAX = 240
 
 const host = ref(null)
 let sketch = null
@@ -31,6 +39,9 @@ function palette() {
   return {
     accent: read('--color-accent'),
     accentSoft: read('--color-accent-soft'),
+    surface: read('--color-surface'),
+    border: read('--color-border'),
+    radius: parseFloat(read('--radius-lg')) || 24,
   }
 }
 
@@ -54,29 +65,35 @@ onMounted(async () => {
     p.setup = () => {
       measure()
       p.createCanvas(width, height)
-      p.noStroke()
     }
 
     p.draw = () => {
       const snapshot = props.controller.snapshot()
 
-      // Bubble grows slightly toward the top: fuller lungs, gentler read.
-      const baseRadius = Math.min(width, height) * 0.125
-      const radius = baseRadius * (0.85 + 0.3 * snapshot.position)
-
-      // Inset the track by the widest halo so the outermost ring stays inside
-      // the guide at both extremes rather than being clipped by its edges.
-      const haloReach = baseRadius * 1.15 * (1 + HALO_RINGS * HALO_SPREAD)
-      const inset = Math.min(Math.max(Math.min(width, height) * 0.06, haloReach), height * 0.4)
-      const trackTop = inset
-      const trackBottom = height - inset
-      const travel = trackBottom - trackTop
-
-      // position 0 = bottom of the guide, 1 = top.
-      const y = trackBottom - snapshot.position * travel
+      const trackWidth = Math.min(width * TRACK_RATIO, TRACK_MAX)
       const x = width / 2
 
+      // Bubble grows slightly toward the top: fuller lungs, gentler read.
+      const baseRadius = Math.min(trackWidth * 0.26, height * 0.11)
+      const radius = baseRadius * (0.85 + 0.3 * snapshot.position)
+
+      // The halo spills past the track sideways, but must stay inside the
+      // canvas vertically, so the travel is inset by its widest reach.
+      const haloReach = baseRadius * 1.15 * (1 + HALO_RINGS * HALO_SPREAD)
+      const travelTop = haloReach
+      const travelBottom = height - haloReach
+
+      // position 0 = bottom of the guide, 1 = top.
+      const y = travelBottom - snapshot.position * (travelBottom - travelTop)
+
       p.clear()
+
+      // The track: a still column the bubble travels along.
+      p.stroke(colors.border)
+      p.strokeWeight(1)
+      p.fill(colors.surface)
+      p.rect(x - trackWidth / 2, 0.5, trackWidth, height - 1, colors.radius)
+      p.noStroke()
 
       // Soft halo. Constant strength: the bubble sits on top of it, so any
       // phase-dependent alpha reads as the bubble changing colour.
@@ -128,10 +145,6 @@ onBeforeUnmount(() => {
 .canvas-host {
   position: absolute;
   inset: 0;
-  /* The guide's corners are rounded but no longer clip their children, so the
-     bubble's halo is clipped here instead. */
-  border-radius: inherit;
-  overflow: hidden;
 }
 
 .canvas-host :deep(canvas) {

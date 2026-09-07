@@ -45,90 +45,93 @@ function toggleFullscreen() {
 
 <template>
   <div class="controls">
-    <div class="controls__row">
-      <button type="button" class="controls__primary" @click="$emit('toggle')">
-        {{ paused ? t('session.resume') : t('session.pause') }}
-      </button>
+    <button
+      type="button"
+      class="controls__button controls__button--primary"
+      @click="$emit('toggle')"
+    >
+      {{ paused ? t('session.resume') : t('session.pause') }}
+    </button>
 
-      <button
-        type="button"
-        class="controls__icon"
-        :aria-pressed="muted"
-        :aria-label="muted ? t('session.unmute') : t('session.mute')"
-        :title="muted ? t('session.unmute') : t('session.mute')"
-        @click="toggleMute"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path class="controls__icon-solid" d="M4 9h3l4.5-4.5v15L7 15H4z" />
-          <template v-if="muted">
-            <path d="M15.5 9.5l5 5M20.5 9.5l-5 5" />
-          </template>
-          <template v-else>
-            <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" />
-          </template>
-        </svg>
-      </button>
-
-      <button
-        v-if="fullscreenSupported"
-        type="button"
-        class="controls__icon controls__icon--accent"
-        :aria-pressed="isFullscreen"
-        :aria-label="isFullscreen ? t('session.exitFullscreen') : t('session.fullscreen')"
-        :title="isFullscreen ? t('session.exitFullscreen') : t('session.fullscreen')"
-        @click="toggleFullscreen"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <template v-if="isFullscreen">
-            <path d="M9 4v5H4M15 4v5h5M15 20v-5h5M9 20v-5H4" />
-            <path d="M4 4l5 5M20 4l-5 5M20 20l-5-5M4 20l5-5" />
-          </template>
-          <template v-else>
-            <path d="M4 9V4h5M20 9V4h-5M20 15v5h-5M4 15v5h5" />
-            <path d="M4 4l6 6M20 4l-6 6M20 20l-6-6M4 20l6-6" />
-          </template>
-        </svg>
-      </button>
-    </div>
-
-    <button type="button" class="controls__exit" @click="$emit('exit')">
+    <button type="button" class="controls__button" @click="$emit('exit')">
       {{ t('session.exit') }}
+    </button>
+
+    <button
+      type="button"
+      class="controls__icon"
+      :aria-pressed="muted"
+      :aria-label="muted ? t('session.unmute') : t('session.mute')"
+      :title="muted ? t('session.unmute') : t('session.mute')"
+      @click="toggleMute"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path class="controls__icon-solid" d="M4 9h3l4.5-4.5v15L7 15H4z" />
+        <template v-if="muted">
+          <path d="M15.5 9.5l5 5M20.5 9.5l-5 5" />
+        </template>
+        <template v-else>
+          <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" />
+        </template>
+      </svg>
+    </button>
+
+    <button
+      v-if="fullscreenSupported"
+      type="button"
+      class="controls__icon controls__icon--accent"
+      :aria-pressed="isFullscreen"
+      :aria-label="isFullscreen ? t('session.exitFullscreen') : t('session.fullscreen')"
+      :title="isFullscreen ? t('session.exitFullscreen') : t('session.fullscreen')"
+      @click="toggleFullscreen"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <template v-if="isFullscreen">
+          <path d="M9 4v5H4M15 4v5h5M15 20v-5h5M9 20v-5H4" />
+          <path d="M4 4l5 5M20 4l-5 5M20 20l-5-5M4 20l5-5" />
+        </template>
+        <template v-else>
+          <path d="M4 9V4h5M20 9V4h-5M20 15v5h-5M4 15v5h5" />
+          <path d="M4 4l6 6M20 4l-6 6M20 20l-6-6M4 20l6-6" />
+        </template>
+      </svg>
     </button>
   </div>
 </template>
 
 <style scoped>
+/* One row: pause, exit and the session settings. The icons sit beside the
+   buttons rather than under them — they are settings, not steps. */
 .controls {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-sm);
-}
-
-/* The icons sit beside the primary button rather than under it: they are
-   session settings, not steps in the session. */
-.controls__row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
   max-width: 100%;
 }
 
-.controls__primary {
-  min-width: min(16rem, 100%);
-  min-height: 3.5rem;
-  padding: 0 var(--space-xl);
-  font-size: 1.125rem;
+.controls__button {
+  /* --touch-min is the floor: the controls are deliberately small so the
+     animation dominates, but never below a comfortable tap target. */
+  min-height: var(--touch-min);
+  padding: 0 var(--space-lg);
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--color-text);
-  background: var(--color-primary);
-  border: 1px solid var(--color-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   transition: background 200ms var(--ease-calm);
 }
 
-.controls__primary:active {
+.controls__button--primary {
+  background: var(--color-primary);
+  border-color: var(--color-secondary);
+}
+
+.controls__button:active {
   background: var(--color-secondary);
 }
 
@@ -136,8 +139,8 @@ function toggleFullscreen() {
   flex: none;
   display: grid;
   place-items: center;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: var(--touch-min);
+  height: var(--touch-min);
   color: var(--color-text-muted);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -156,8 +159,8 @@ function toggleFullscreen() {
 }
 
 .controls__icon svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.75;
@@ -168,14 +171,5 @@ function toggleFullscreen() {
 /* The speaker cone reads as a solid shape; the waves and the cross as lines. */
 .controls__icon-solid {
   fill: currentColor;
-}
-
-/* Landscape phones have little height to spare: shrink the row rather than
-   let it push the guide. */
-@media (orientation: landscape) and (max-height: 30rem) {
-  .controls__icon {
-    width: var(--touch-min);
-    height: var(--touch-min);
-  }
 }
 </style>

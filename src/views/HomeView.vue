@@ -55,7 +55,7 @@ import {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  max-width: 60rem;
+  max-width: 40rem;
   width: 100%;
   margin: 0 auto;
 }
@@ -82,8 +82,9 @@ import {
   align-content: start;
 }
 
+/* Sits directly under the panels rather than being pushed to the bottom of the
+   window: the choices and the action they confirm read as one block. */
 .home__actions {
-  margin-top: auto;
   display: grid;
   justify-items: center;
   gap: var(--space-sm);
@@ -126,11 +127,13 @@ import {
 }
 
 /* Two columns once there is room (SPECS §13). Mobile-first: this is the
-   enhancement, not the baseline. */
-@media (min-width: 40rem) {
+   enhancement, not the baseline. The duration column is given a fixed narrow
+   track so the preset buttons stay compact and the profile cards take the
+   remaining width rather than both stretching across the screen. */
+@media (min-width: 34rem) {
   .home__panels {
-    grid-template-columns: 1.4fr 1fr;
-    gap: var(--space-xl);
+    grid-template-columns: minmax(0, 1fr) 12rem;
+    gap: var(--space-lg);
   }
 }
 </style>
