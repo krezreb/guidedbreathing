@@ -258,6 +258,18 @@ session of any length and lets it survive a dropped frame or a backgrounded tab
 without any resynchronisation, since no part of the guidance depends on where an
 individual dot happens to be.
 
+Each dot fades in as it appears, holds full opacity for most of its life, and
+fades out at the end, after which it respawns somewhere else with freshly
+randomised motion. Lives are staggered at startup and spread over a wide range,
+so the field never fades in or blinks out in unison. Nothing appears or vanishes
+abruptly, which is what keeps the field from reading as a distraction.
+
+Every randomised quantity — radius, peak opacity, mass, starting momentum,
+lifetime — is drawn from a `[min, max]` range, and all of those ranges plus the
+two accelerations and the two terminal speeds live in one config module
+(`data/particleField.js`). The field's character is therefore tunable in one
+place, without touching either the physics or the draw loop.
+
 Frame delta is clamped before integration: a tab returning from the background
 reports one very large frame, which would otherwise move the whole field at once.
 

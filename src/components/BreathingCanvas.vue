@@ -17,10 +17,6 @@ const props = defineProps({
   controller: { type: Object, required: true },
 })
 
-/** How many particles drift behind the bubble. Enough to read as a field,
- *  few enough to stay subtle on a small screen. */
-const PARTICLE_COUNT = 28
-
 /** Halo geometry, shared by the draw loop and the track inset. */
 const HALO_RINGS = 4
 const HALO_SPREAD = 0.42
@@ -49,7 +45,7 @@ onMounted(async () => {
   sketch = new p5((p) => {
     let width = 0
     let height = 0
-    const particles = makeParticles(PARTICLE_COUNT)
+    const particles = makeParticles()
 
     const measure = () => {
       const rect = host.value.getBoundingClientRect()
@@ -92,7 +88,7 @@ onMounted(async () => {
       const particleScale = Math.min(width, height)
       for (const particle of particles) {
         const dot = p.color(colors.accentSoft)
-        dot.setAlpha(particle.alpha)
+        dot.setAlpha(particle.opacity)
         p.fill(dot)
         p.circle(particle.x * width, particle.y * height, particle.radius * particleScale * 2)
       }
