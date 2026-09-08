@@ -10,15 +10,21 @@
  * is wider than the track on purpose, and a DOM box would either clip it or
  * need its geometry duplicated in CSS and here.
  *
+ * With `settling`, the same sketch draws the background field alone — no track,
+ * no bubble, no controller — while it falls away on the completion screen. The
+ * field itself is shared module state, so it carries straight over.
+ *
  * Instance mode with an explicit remove() on unmount: p5 installs its own
  * animation loop and global listeners, and leaks a running sketch per session
  * otherwise.
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { makeParticles, stepParticles } from '../services/particles.js'
+import { field, SETTLE, stepParticles } from '../services/particles.js'
 
 const props = defineProps({
-  controller: { type: Object, required: true },
+  controller: { type: Object, default: null },
+  /** Draw only the background field, falling away and not replenished. */
+  settling: { type: Boolean, default: false },
 })
 
 /** Halo geometry, shared by the draw loop and the travel inset. */
@@ -56,7 +62,6 @@ onMounted(async () => {
   sketch = new p5((p) => {
     let width = 0
     let height = 0
-    const particles = makeParticles()
 
     const measure = () => {
       const rect = host.value.getBoundingClientRect()
@@ -70,14 +75,15 @@ onMounted(async () => {
     }
 
     p.draw = () => {
-      const snapshot = props.controller.snapshot()
+      const snapshot = props.settling ? null : props.controller.snapshot()
+      const position = snapshot ? snapshot.position : 0
 
       const trackWidth = Math.min(width * TRACK_RATIO, TRACK_MAX)
       const x = width / 2
 
       // Bubble grows slightly toward the top: fuller lungs, gentler read.
       const baseRadius = Math.min(trackWidth * 0.26, height * 0.11)
-      const radius = baseRadius * (0.85 + 0.3 * snapshot.position)
+      const radius = baseRadius * (0.85 + 0.3 * position)
 
       // The halo spills past the track sideways, but must stay inside the
       // canvas vertically, so the travel is inset by its widest reach.
@@ -86,29 +92,33 @@ onMounted(async () => {
       const travelBottom = height - haloReach
 
       // position 0 = bottom of the guide, 1 = top.
-      const y = travelBottom - snapshot.position * (travelBottom - travelTop)
+      const y = travelBottom - position * (travelBottom - travelTop)
 
       p.clear()
 
-      // The track: a still column the bubble travels along.
-      p.stroke(colors.border)
-      p.strokeWeight(1)
-      p.fill(colors.surface)
-      p.rect(x - trackWidth / 2, 0.5, trackWidth, height - 1, colors.radius)
-      p.noStroke()
+      if (snapshot) {
+        // The track: a still column the bubble travels along.
+        p.stroke(colors.border)
+        p.strokeWeight(1)
+        p.fill(colors.surface)
+        p.rect(x - trackWidth / 2, 0.5, trackWidth, height - 1, colors.radius)
+        p.noStroke()
+      }
 
       // Background field, over the track but under the bubble and its halo.
       // deltaTime is capped: a backgrounded tab hands back one huge frame,
       // which would otherwise teleport the whole field.
       const dtSeconds = Math.min(p.deltaTime, 100) / 1000
-      stepParticles(particles, snapshot.phase, dtSeconds)
+      stepParticles(field, snapshot ? snapshot.phase : SETTLE, dtSeconds)
       const particleScale = Math.min(width, height)
-      for (const particle of particles) {
+      for (const particle of field) {
         const dot = p.color(colors.accentSoft)
         dot.setAlpha(particle.opacity)
         p.fill(dot)
         p.circle(particle.x * width, particle.y * height, particle.radius * particleScale * 2)
       }
+
+      if (!snapshot) return
 
       // Soft halo. Constant strength: the bubble sits on top of it, so any
       // phase-dependent alpha reads as the bubble changing colour.

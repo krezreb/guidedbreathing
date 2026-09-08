@@ -39,8 +39,11 @@ const durationLabel = computed(() =>
 </template>
 
 <style scoped>
+/* Laid over the breathing stage, not in place of it: the particle field behind
+   this message is the same canvas the session was drawn on, still running. */
 .completion {
-  flex: 1;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,6 +51,9 @@ const durationLabel = computed(() =>
   gap: var(--space-md);
   text-align: center;
   padding: var(--space-lg);
+  /* The stage is shorter than the screen, so on a small landscape phone the
+     message scrolls rather than spilling over the controls' old space. */
+  overflow-y: auto;
 }
 
 .completion__mark {

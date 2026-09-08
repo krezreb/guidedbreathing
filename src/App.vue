@@ -6,7 +6,6 @@
  */
 import { computed } from 'vue'
 import BreathingView from './views/BreathingView.vue'
-import CompletionMessage from './components/CompletionMessage.vue'
 import ExitConfirmDialog from './components/ExitConfirmDialog.vue'
 import HomeView from './views/HomeView.vue'
 import InformationView from './views/InformationView.vue'
@@ -15,14 +14,12 @@ import { initLocale } from './services/i18n.js'
 import {
   cancelExit,
   confirmExit,
-  controller,
   exitConfirmVisible,
   homeScreen,
   installLifecycleHandlers,
   isCompleted,
   isSessionActive,
   remainingLabel,
-  returnHome,
 } from './services/useSession.js'
 
 installLifecycleHandlers()
@@ -39,14 +36,11 @@ const screen = computed(() => {
 
 <template>
   <div class="app-shell">
-    <BreathingView v-if="screen === 'session'" />
-
-    <CompletionMessage
-      v-else-if="screen === 'completed' && controller"
-      :profile-id="controller.profile.id"
-      :duration-minutes="controller.durationMinutes"
-      @done="returnHome"
-    />
+    <!-- The completion message is shown over the breathing screen rather than
+         instead of it: the particle field is mid-flight when the session ends
+         and carries on falling behind the message, which it cannot do if the
+         canvas is torn down and rebuilt at a different size. -->
+    <BreathingView v-if="screen === 'session' || screen === 'completed'" />
 
     <InformationView v-else-if="screen === 'info'" @back="homeScreen = 'home'" />
 

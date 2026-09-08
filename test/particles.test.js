@@ -1,26 +1,76 @@
 import { describe, expect, it } from 'vitest'
 
 import { PARTICLE_FIELD } from '../src/data/particleField.js'
-import { makeParticles, stepParticles } from '../src/services/particles.js'
+import { makeParticles, SETTLE, stepParticles } from '../src/services/particles.js'
 import { PHASE } from '../src/services/sessionController.js'
 
 /** Deterministic stand-in for Math.random, so particles are predictable. */
 const half = () => 0.5
 
 /** One particle, mid-range in every respect. */
-function one(config = PARTICLE_FIELD) {
-  return makeParticles(1, half, config)[0]
+function one(config = PARTICLE_FIELD, rand = half) {
+  return makeParticles(1, rand, config)[0]
 }
 
 /** Advance one particle in small steps, the way the draw loop does. */
-function run(particle, phase, seconds, step = 1 / 60) {
+function run(particle, phase, seconds, step = 1 / 60, rand = half) {
   for (let elapsed = 0; elapsed < seconds; elapsed += step) {
-    stepParticles([particle], phase, step, half)
+    stepParticles([particle], phase, step, rand)
   }
   return particle
 }
 
 describe('background particles', () => {
+  it('rises within 10 degrees of vertical', () => {
+    for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
+      const rand = () => fraction
+      // Long-lived and mid-canvas, so it rises for the whole run without
+      // respawning or wrapping round an edge.
+      const particle = one({ ...PARTICLE_FIELD, lifeSeconds: [999, 999] }, rand)
+      particle.x = 0.5
+      particle.y = 0.5
+      particle.age = 0
+      const start = { ...particle }
+      run(particle, PHASE.INHALE, 3, 1 / 60, rand)
+      const rise = start.y - particle.y
+      expect(rise).toBeGreaterThan(0)
+      const degrees = Math.abs((Math.atan2(particle.x - start.x, rise) * 180) / Math.PI)
+      expect(degrees).toBeLessThanOrEqual(10.0001)
+    }
+  })
+
+  it('picks a fresh drift angle at the start of each inhale', () => {
+    const particle = one()
+    const angles = new Set()
+    for (let breath = 0; breath < 6; breath++) {
+      stepParticles([particle], PHASE.INHALE, 1 / 60)
+      angles.add(particle.drift)
+      // Exhaling is what arms the next redraw.
+      stepParticles([particle], PHASE.EXHALE, 1 / 60)
+      const held = particle.drift
+      stepParticles([particle], PHASE.EXHALE, 1 / 60)
+      expect(particle.drift).toBe(held)
+    }
+    expect(angles.size).toBeGreaterThan(1)
+  })
+
+  it('settles off the bottom of the canvas without respawning', () => {
+    const particles = makeParticles(12)
+    const start = particles.map((particle) => ({ ...particle }))
+
+    for (let frame = 0; frame < 60 * 120; frame++) {
+      stepParticles(particles, SETTLE, 1 / 60)
+    }
+
+    particles.forEach((particle, index) => {
+      expect(particle.y).toBeGreaterThan(1)
+      expect(particle.opacity).toBe(0)
+      // Same particle throughout: settling never hands out a fresh one.
+      expect(particle.radius).toBe(start[index].radius)
+      expect(particle.lifeSeconds).toBe(start[index].lifeSeconds)
+    })
+  })
+
   it('places every particle inside the canvas', () => {
     for (const particle of makeParticles()) {
       expect(particle.x).toBeGreaterThanOrEqual(0)

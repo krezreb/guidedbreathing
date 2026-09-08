@@ -32,6 +32,13 @@ export const PARTICLE_FIELD = {
   velocity: [-0.02, 0.02],
 
   /**
+   * How far off vertical a particle travels, in degrees. Left and right of
+   * exact up, so the field spreads a little instead of rising in columns.
+   * Redrawn at the start of every inhale, so no particle keeps one lane.
+   */
+  driftDegrees: [-10, 10],
+
+  /**
    * How long a particle lives before it fades out and is replaced somewhere
    * else. Spread widely so the field never blinks in unison.
    */

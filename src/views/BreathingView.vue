@@ -1,19 +1,28 @@
 <script setup>
 import { computed } from 'vue'
 import BreathingCanvas from '../components/BreathingCanvas.vue'
+import CompletionMessage from '../components/CompletionMessage.vue'
 import SessionControls from '../components/SessionControls.vue'
 import SessionTimer from '../components/SessionTimer.vue'
 import { t } from '../services/i18n.js'
 import { PHASE } from '../services/sessionController.js'
 import {
   controller,
+  isCompleted,
   isPaused,
   pausedWhileAway,
   phase,
   remainingLabel,
   requestExit,
+  returnHome,
   togglePause,
 } from '../services/useSession.js'
+
+/**
+ * The session's own chrome stays in the layout once the session completes, only
+ * hidden and inert: removing it would resize the stage, and the particle field
+ * carrying on behind the completion message is measured against that stage.
+ */
 
 /**
  * The phase is conveyed in text as well as by the animation, so the breathing
@@ -26,9 +35,18 @@ const phaseLabel = computed(() =>
 
 <template>
   <main class="session">
-    <SessionTimer :label="remainingLabel" :visible="isPaused" />
+    <SessionTimer
+      class="session__chrome"
+      :label="remainingLabel"
+      :visible="isPaused"
+      :inert="isCompleted"
+    />
 
-    <div class="session__phase" :class="{ 'session__phase--paused': isPaused }">
+    <div
+      class="session__phase session__chrome"
+      :class="{ 'session__phase--paused': isPaused }"
+      :inert="isCompleted"
+    >
       <p class="session__phase-text" aria-live="polite">
         {{ isPaused ? t('session.paused') : phaseLabel }}
       </p>
@@ -38,10 +56,23 @@ const phaseLabel = computed(() =>
     </div>
 
     <div class="session__stage">
-      <BreathingCanvas v-if="controller" :controller="controller" />
+      <BreathingCanvas v-if="controller" :controller="controller" :settling="isCompleted" />
+
+      <CompletionMessage
+        v-if="isCompleted && controller"
+        :profile-id="controller.profile.id"
+        :duration-minutes="controller.durationMinutes"
+        @done="returnHome"
+      />
     </div>
 
-    <SessionControls :paused="isPaused" @toggle="togglePause" @exit="requestExit" />
+    <SessionControls
+      class="session__chrome"
+      :paused="isPaused"
+      :inert="isCompleted"
+      @toggle="togglePause"
+      @exit="requestExit"
+    />
   </main>
 </template>
 
@@ -55,6 +86,14 @@ const phaseLabel = computed(() =>
   width: 100%;
   margin: 0 auto;
   padding: var(--space-sm) 0;
+}
+
+/* Hidden but still taking up its space, so the stage — and with it the
+   particle field's coordinate space — is the same size before and after the
+   session completes. `inert` takes it out of the tab order and the
+   accessibility tree at the same time. */
+.session__chrome[inert] {
+  visibility: hidden;
 }
 
 /* The guide takes all the height left over: the breathing animation is the
