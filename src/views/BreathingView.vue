@@ -35,13 +35,6 @@ const phaseLabel = computed(() =>
 
 <template>
   <main class="session">
-    <SessionTimer
-      class="session__chrome"
-      :label="remainingLabel"
-      :visible="isPaused"
-      :inert="isCompleted"
-    />
-
     <div
       class="session__phase session__chrome"
       :class="{ 'session__phase--paused': isPaused }"
@@ -56,6 +49,13 @@ const phaseLabel = computed(() =>
     </div>
 
     <div class="session__stage">
+      <SessionTimer
+        class="session__chrome session__timer"
+        :label="remainingLabel"
+        :visible="isPaused"
+        :inert="isCompleted"
+      />
+
       <BreathingCanvas v-if="controller" :controller="controller" :settling="isCompleted" />
 
       <CompletionMessage
@@ -67,7 +67,7 @@ const phaseLabel = computed(() =>
     </div>
 
     <SessionControls
-      class="session__chrome"
+      class="session__chrome session__controls"
       :paused="isPaused"
       :inert="isCompleted"
       @toggle="togglePause"
@@ -81,11 +81,28 @@ const phaseLabel = computed(() =>
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
   max-width: 50rem;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-sm) 0;
+  /* One line of breathing room above the prompt, and none below it: the stage
+     starts right under the text and takes everything that is left. */
+  padding: 1em 0 var(--space-sm);
+}
+
+.session__controls {
+  margin-top: var(--space-md);
+}
+
+/* Over the stage, not above it: in the flow it would hold a block of empty
+   space open for the whole session, since it only appears while paused. */
+.session__timer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* The canvas is a later sibling and paints the opaque track over anything
+     underneath it, so the clock needs a layer of its own. */
+  z-index: 1;
 }
 
 /* Hidden but still taking up its space, so the stage — and with it the

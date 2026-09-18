@@ -102,6 +102,12 @@ a {
     max(var(--space-md), env(safe-area-inset-bottom)) max(var(--space-md), env(safe-area-inset-left));
 }
 
+/* The session screen runs its prompt right up to the top edge, so only the
+   safe-area inset is kept there. */
+.app-shell--flush {
+  padding-top: env(safe-area-inset-top);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

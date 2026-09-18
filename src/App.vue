@@ -35,7 +35,7 @@ const screen = computed(() => {
 </script>
 
 <template>
-  <div class="app-shell">
+  <div class="app-shell" :class="{ 'app-shell--flush': screen === 'session' || screen === 'completed' }">
     <!-- The completion message is shown over the breathing screen rather than
          instead of it: the particle field is mid-flight when the session ends
          and carries on falling behind the message, which it cannot do if the
