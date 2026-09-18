@@ -31,6 +31,9 @@ const props = defineProps({
 const HALO_RINGS = 4
 const HALO_SPREAD = 0.42
 
+/** Gap in pixels between the bubble's edge and the top or bottom of the stage. */
+const EDGE_PADDING = 10
+
 /** Track width as a share of the stage, capped so it stays a narrow column. */
 const TRACK_RATIO = 0.34
 const TRACK_MAX = 240
@@ -85,11 +88,11 @@ onMounted(async () => {
       const baseRadius = Math.min(trackWidth * 0.26, height * 0.11)
       const radius = baseRadius * (0.85 + 0.3 * position)
 
-      // The halo spills past the track sideways, but must stay inside the
-      // canvas vertically, so the travel is inset by its widest reach.
-      const haloReach = baseRadius * 1.15 * (1 + HALO_RINGS * HALO_SPREAD)
-      const travelTop = haloReach
-      const travelBottom = height - haloReach
+      // Inset by the bubble's own radius at each end plus a fixed gap, so the
+      // bubble stops EDGE_PADDING short of the wall. The halo is allowed to
+      // spill past the edge: insetting by its reach costs most of the travel.
+      const travelTop = baseRadius * 1.15 + EDGE_PADDING
+      const travelBottom = height - baseRadius * 0.85 - EDGE_PADDING
 
       // position 0 = bottom of the guide, 1 = top.
       const y = travelBottom - position * (travelBottom - travelTop)
