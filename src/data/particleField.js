@@ -12,10 +12,10 @@ export const PARTICLE_FIELD = {
   count: 28,
 
   /** Radius in unit terms, scaled to pixels at draw time. */
-  radius: [0.002, 0.006],
+  radius: [0.002, 0.009],
 
   /** Peak opacity, 0–255. Low: this sits behind the bubble. */
-  alpha: [10, 36],
+  alpha: [40, 144],
 
   /**
    * Stands in for mass. Scales both the acceleration a particle feels and the
